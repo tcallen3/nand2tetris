@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <string>
+#include <set>
 
 class CompilationEngine {
   public:
@@ -37,6 +38,8 @@ class CompilationEngine {
         {JackTokenizer::INT_CONST, "integerConstant"},
         {JackTokenizer::STRING_CONST, "stringConstant"},
     };
+
+    const std::set<std::string> validTypes = {"int", "char", "boolean"};
 
     // methods
   private:

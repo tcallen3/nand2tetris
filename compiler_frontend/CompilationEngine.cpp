@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <set>
 
 /* -------------------------------------------------------------------------- */
 
@@ -171,9 +170,7 @@ void CompilationEngine::CompileClassVarDec() {
 void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
 
     // type must be int, char, boolean, or class ID
-    const std::set<std::string> allowedTypes = {"int", "char", "boolean"};
-
-    if (allowedTypes.find(jtok.GetToken()) == allowedTypes.end() &&
+    if (validTypes.find(jtok.GetToken()) == validTypes.end() &&
         jtok.TokenType() != JackTokenizer::IDENTIFIER) {
         const std::string errMsg =
             "Invalid type for variable declaration";
@@ -205,7 +202,6 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
         PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
     }
-
 }
 
 /* -------------------------------------------------------------------------- */
@@ -216,7 +212,62 @@ void CompilationEngine::CompileSubroutine() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
-    // TODO: add content
+    // syntax: ('constructor' | 'function' | 'method') ('void' | type)
+    //         subroutineName '(' parameterList ')' subroutineBody
+
+    // print function type (already checked in caller)
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // ('void' | type)
+    std::set<std::string> functionTypes(validTypes);
+    functionTypes.insert("void");
+
+    if (functionTypes.find(jtok.GetToken()) == functionTypes.end() &&
+        jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg =
+            "Invalid type for function return type declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // subroutineName -> identifier
+    if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg =
+            "Invalid identifier for function name";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // literal '('
+    if (jtok.GetToken() != "(") {
+        const std::string errMsg = "Missing opening paren in subroutine parameter list";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // optional parameterList -> variable declaration
+    if (jtok.GetToken() != ")") {
+        CompileParameterList();
+    }
+
+    // literal ')'
+    if (jtok.GetToken() != ")") {
+        const std::string errMsg = "Missing closing paren in subroutine parameter list";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // subroutineBody
+    CompileSubroutineBody();
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -224,19 +275,104 @@ void CompilationEngine::CompileSubroutine() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileParameterList() {}
+void CompilationEngine::CompileParameterList() {
+    const std::string xmlName = "parameterList";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: ((type varName) (',' type varName)*)?
+    // note that this is the same (apart from parens) as standard var dec
+    CompileVarDecCommon(")");
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileSubroutineBody() {}
+void CompilationEngine::CompileSubroutineBody() {
+    const std::string xmlName = "subroutineBody";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: '{' varDec* statements '}'
+
+    // literal '{'
+    if (jtok.GetToken() != "{") {
+        const std::string errMsg = "Missing opening bracket in subroutine body";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // varDec* statements
+    while (jtok.GetToken() != "}") {
+        if (jtok.GetToken() == "var") {
+            CompileVarDec();
+        } else {
+            CompileStatements();
+        }
+    }
+
+    // literal '}'
+    if (jtok.GetToken() != "}") {
+        const std::string errMsg = "Missing closing bracket in subroutine body";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileVarDec() {}
+void CompilationEngine::CompileVarDec() {
+    const std::string xmlName = "varDec";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: 'var' type varName (',' varName)* ';'
+
+    // 'var', already checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // type, etc.
+    CompileVarDecCommon(";");
+
+    // literal ';'
+    if (jtok.GetToken() != ";") {
+        const std::string errMsg = "Missing semicolon";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileStatements() {}
+void CompilationEngine::CompileStatements() {
+    const std::string xmlName = "statements";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // TODO: add content
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 

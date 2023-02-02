@@ -446,7 +446,6 @@ void CompilationEngine::CompileStatements() {
 
 /* -------------------------------------------------------------------------- */
 
-// TODO: special printing format
 void CompilationEngine::CompileDo() {
     const std::string xmlName = "doStatement";
 
@@ -643,13 +642,43 @@ void CompilationEngine::CompileIf() {
 
 /* -------------------------------------------------------------------------- */
 
-// TODO: special printing format
 void CompilationEngine::CompileSubroutineCall() {
     // syntax: subroutineName '(' expressionList ')' |
     //         (className | varName) '.' subroutineName '(' expressionList ')'
 
     // subroutineName | (className | varName) -> identifier checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    if (jtok.LookaheadToken() == "(") {
+        // regular subroutine
+        PrintIdentifier(SUBROUTINE, USED);
+    } else {
+        // class or variable (class won't be in lookup table)
+        const std::string varName = jtok.GetToken();
+        if (symTable.Check(varName)) {
+            SymbolTable::VARKIND kind = symTable.KindOf(varName);
+            Category category;
+
+            if (kind == SymbolTable::VAR) {
+                category = VAR;
+            } else if (kind == SymbolTable::FIELD) {
+                category = FIELD;
+            } else if (kind == SymbolTable::STATIC) {
+                category = STATIC;
+            } else if (kind == SymbolTable::ARG) {
+                category = ARGUMENT;
+            } else {
+                const std::string errMsg =
+                    "Unrecognized variable category in subroutine call";
+                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
+                                            errMsg);
+            }
+
+            PrintIdentifier(category, USED);
+
+        } else {
+            PrintIdentifier(CLASS, USED);
+        }
+    }
+
     jtok.Advance();
 
     if (jtok.GetToken() == "(") {
@@ -678,7 +707,7 @@ void CompilationEngine::CompileSubroutineCall() {
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
 
-        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        PrintIdentifier(SUBROUTINE, USED);
         jtok.Advance();
 
         // literal '('

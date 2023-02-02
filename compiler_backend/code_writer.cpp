@@ -155,19 +155,21 @@ void CodeWriter::PopRegister(const std::string& reg) {
 
 /* -------------------------------------------------------------------------- */
 
+// NOTE: truth value indicator must be placed in D register, as this is
+//       canonical operator return location
 void CodeWriter::WriteComparison(const std::string& op) {
     outFile << "D=A-D\n";
     outFile << "@EQ" << jumpIndex << '\n';
     outFile << "D;" << op << '\n';
     outFile << "@SP\n";
     outFile << "A=M\n";
-    outFile << "M=0\n";
+    outFile << "D=0\n";
     outFile << "@TERM" << jumpIndex << '\n';
     outFile << "0;JMP\n";
     outFile << "(EQ" << jumpIndex << ")\n";
     outFile << "@SP\n";
     outFile << "A=M\n";
-    outFile << "M=-1\n";
+    outFile << "D=-1\n";
     outFile << "(TERM" << jumpIndex << ")\n";
 
     ++jumpIndex;

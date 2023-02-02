@@ -51,12 +51,7 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
     if (segment == constSegment) {
         outFile << '@' << index << '\n';  // int literal
         outFile << "D=A\n";               // transfer to register
-        outFile << "@SP\n";               // look up stack pointer
-        outFile << "A=M\n";               // A = pointer val
-        outFile << "M=D\n";               // M[val] = index
-        outFile << "D=A\n";               // D = val
-        outFile << "@SP\n";               // look up stack pointer
-        outFile << "M=D+1\n";             // increment stack pointer
+        PushRegister("D");
 
     } else if (regMap.find(segment) != regMap.end()){
         outFile << '@' << index << '\n';

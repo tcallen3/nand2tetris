@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
             TranslateVMFile(parser, writer);
 
         } else if (fs::is_directory(inputPath)) {
+            // assumes compiler is called on relative path of dir 
+            // i.e. using -> ./parser mydir
             fs::path outPath =
                 inputPath.parent_path() / inputPath.parent_path();
             outName = outPath + outExt;

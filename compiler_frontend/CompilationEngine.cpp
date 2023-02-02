@@ -775,7 +775,6 @@ void CompilationEngine::CompileExpression() {
 
 /* -------------------------------------------------------------------------- */
 
-// TODO: special printing format
 void CompilationEngine::CompileTerm() {
     const std::string xmlName = "term";
 
@@ -808,7 +807,19 @@ void CompilationEngine::CompileTerm() {
             // array dereference, syntax: varName '[' expression ']'
 
             // varName
-            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+            const std::string varName = jtok.GetToken();
+            if (!symTable.Check(varName)) {
+                const std::string errMsg =
+                    "Variable " + varName + " not defined in current scope";
+                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
+                                            errMsg);
+            }
+
+            auto kind = symTable.KindOf(varName);
+            const Category category = kindMap.at(kind);
+
+            PrintIdentifier(category, USED);
+
             jtok.Advance();
 
             // literal '['
@@ -827,7 +838,19 @@ void CompilationEngine::CompileTerm() {
 
         } else {
             // varName
-            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+            const std::string varName = jtok.GetToken();
+            if (!symTable.Check(varName)) {
+                const std::string errMsg =
+                    "Variable " + varName + " not defined in current scope";
+                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
+                                            errMsg);
+            }
+
+            auto kind = symTable.KindOf(varName);
+            const Category category = kindMap.at(kind);
+
+            PrintIdentifier(category, USED);
+
             jtok.Advance();
         }
 

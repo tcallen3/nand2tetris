@@ -65,8 +65,9 @@ void JackTokenizer::AdvanceDriver() {
     }
 
     // check for comments
-    if (currLine[currColumnNum] == '/' &&
-        (currColumnNum + 1) < currLine.size()) {
+    if ((currLine[currColumnNum] == '/') &&
+        (currLine[currColumnNum + 1] == '/' ||
+         currLine[currColumnNum + 1] == '*')) {
         if (currLine[currColumnNum + 1] == '/') {
             currTokenType = COMMENT;
             ReadNextLine();

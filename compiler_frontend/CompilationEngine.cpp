@@ -391,15 +391,15 @@ void CompilationEngine::CompileSubroutineBody(const std::string& funcName) {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileVarDec() {
-    //const std::string xmlName = "varDec";
+    // const std::string xmlName = "varDec";
 
-    //PrintNodeTag(xmlName, OPENING);
-    //currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: 'var' type varName (',' varName)* ';'
 
     // 'var', already checked by caller
-    //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // type, etc.
@@ -408,8 +408,8 @@ void CompilationEngine::CompileVarDec() {
     // literal ';'
     CheckLiteralSymbol(";", "variable declaration");
 
-    //currIndent.pop_back();
-    //PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -482,7 +482,7 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    //PrintIdentifier(category, USED);
+    // PrintIdentifier(category, USED);
 
     jtok.Advance();
 
@@ -572,9 +572,6 @@ void CompilationEngine::CompileWhile() {
 
     // literal '}'
     CheckLiteralSymbol("}", "while statement body");
-
-    //currIndent.pop_back();
-    //PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -599,11 +596,6 @@ void CompilationEngine::CompileReturn() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileIf() {
-    //const std::string xmlName = "ifStatement";
-
-    //PrintNodeTag(xmlName, OPENING);
-    //currIndent.push_back('\t');
-
     // syntax: 'if' '(' expression ')' '{' statements '}' ('else' '{' statements
     // '}')?
 
@@ -611,7 +603,6 @@ void CompilationEngine::CompileIf() {
     ++branchCount;
 
     // 'if' -> checked by caller
-    //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // literal '('
@@ -624,7 +615,8 @@ void CompilationEngine::CompileIf() {
     vmWriter.WriteArithmetic(VMWriter::NOT);
 
     // jump to end of if branch if condition fails
-    const std::string midLabel = "MID_" + branchBase + std::to_string(myBranchCount);
+    const std::string midLabel =
+        "MID_" + branchBase + std::to_string(myBranchCount);
     vmWriter.WriteIf(midLabel);
 
     // literal ')'
@@ -640,7 +632,8 @@ void CompilationEngine::CompileIf() {
     CheckLiteralSymbol("}", "if condition body");
 
     // jump to end of all blocks (including else)
-    const std::string endLabel = endPrefix + branchBase + std::to_string(myBranchCount);
+    const std::string endLabel =
+        endPrefix + branchBase + std::to_string(myBranchCount);
     vmWriter.WriteGoto(endLabel);
 
     // write label for end of if branch
@@ -649,7 +642,6 @@ void CompilationEngine::CompileIf() {
     // optional else clause
     if (jtok.GetToken() == "else") {
         // 'else'
-        //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
 
         // literal '{'
@@ -664,9 +656,6 @@ void CompilationEngine::CompileIf() {
 
     // label end of all blocks
     vmWriter.WriteLabel(endLabel);
-
-    //currIndent.pop_back();
-    //PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -827,10 +816,8 @@ void CompilationEngine::CompileTerm() {
 
         } else {
             // TODO: handle "this" constant
-
         }
 
-        //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
 
     } else if (tokenType == JackTokenizer::IDENTIFIER) {
@@ -891,9 +878,6 @@ void CompilationEngine::CompileTerm() {
             }
 
             vmWriter.WritePush(seg, index);
-            //const Category category = kindMap.at(kind);
-
-            //PrintIdentifier(category, USED);
 
             jtok.Advance();
         }

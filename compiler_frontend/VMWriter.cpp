@@ -5,12 +5,12 @@
 /* -------------------------------------------------------------------------- */
 
 VMWriter::VMWriter(std::ofstream& out) : outFile(out) {
-/*
-    if (!outFile.is_open()) {
-        std::cerr << "ERROR: Could not open file \"" << outName << "\"\n";
-        std::exit(EXIT_FAILURE);
-    }
-*/
+    /*
+        if (!outFile.is_open()) {
+            std::cerr << "ERROR: Could not open file \"" << outName << "\"\n";
+            std::exit(EXIT_FAILURE);
+        }
+    */
 }
 
 /* -------------------------------------------------------------------------- */

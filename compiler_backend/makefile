@@ -2,10 +2,21 @@
 CXX 			= g++
 
 # compiler flags
-CXX_FLAGS 		= -Wall -Werror -Weffc++ -g -std=c++17
+DEBUG_WARNINGS	= -Wcast-align -Wcast-qual \
+				  -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
+				  -Winit-self -Wlogical-op -Wmissing-declarations \
+				  -Wmissing-include-dirs -Wnoexcept -Wold-style-cast \
+				  -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion \
+				  -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 \
+				  -Wswitch-default -Wswitch-enum -Wundef -Winvalid-pch \
+				  -Wmissing-format-attribute -Wodr
+
+WARNINGS 		= -pedantic -Wall -Wextra
+
+CXX_FLAGS 		= $(WARNINGS) -g -std=c++17
 
 # linker flags
-LDFLAGS 		=
+LDFLAGS 		= #$(WARNINGS)
 
 # these may need to be built
 BUILD_DIR 		= build
@@ -30,6 +41,9 @@ $(BIN_DIR):
 
 VMTranslator: $(OBJS) | $(BIN_DIR)
 	$(CXX) $(LDFLAGS) -o $(BIN_DIR)/$@ $^
+
+debug: CXX_FLAGS += $(DEBUG_WARNINGS) -DDEBUG
+debug: VMTranslator
 
 # include all .d files for header dependencies
 -include $(DEP)

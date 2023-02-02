@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     if (fs::exists(inputPath)) {
         if (fs::is_regular_file(inputPath) && inputPath.extension() == inExt) {
             outName = inputPath.stem();
-            outName += outExt;
+            outName += "T" + outExt;
 
             CompilationEngine compiler(inputPath.filename(), outName);
 

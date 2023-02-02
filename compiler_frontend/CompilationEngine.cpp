@@ -196,15 +196,7 @@ void CompilationEngine::PrintIdentifier(const Category category,
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileClassVarDec() {
-    const std::string xmlName = "classVarDec";
-
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
-
     // syntax: ('static' | 'field') type varName (',' varName)* ';'
-
-    // static/field dec (already selected in caller)
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
 
     // determine variable category
     const Category category = (jtok.GetToken() == "static") ? STATIC : FIELD;
@@ -219,11 +211,7 @@ void CompilationEngine::CompileClassVarDec() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
-
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -381,9 +369,8 @@ void CompilationEngine::CompileSubroutineBody(const std::string& funcName,
     auto vmName = currClass + "." + funcName;
 
     if (funcType == "method") {
-        // increment parameter count to include hidden "this" pointer
+        // make sure we track arg variables with 1-offset
         symTable.SetMethod();
-        ++nLocal;
     }
 
     vmWriter.WriteFunction(vmName, nLocal);
@@ -683,6 +670,7 @@ void CompilationEngine::CompileSubroutineCall() {
     // subroutineName | (className | varName) -> identifier checked by caller
     std::string className = currClass;
     std::string funcName = "dummy";
+    bool isMethod = false;
     if (jtok.LookaheadToken() == "(") {
         // regular subroutine
         funcName = jtok.GetToken();
@@ -692,6 +680,7 @@ void CompilationEngine::CompileSubroutineCall() {
         if (symTable.Check(varName)) {
             // method, need to push "this" segment stored in variable
             className = symTable.TypeOf(varName);
+            isMethod = true;
 
             auto kind = symTable.KindOf(varName);
             auto index = symTable.IndexOf(varName);
@@ -699,9 +688,6 @@ void CompilationEngine::CompileSubroutineCall() {
 
             // push stored "this" value
             vmWriter.WritePush(seg, index);
-
-            // pop into "this" register
-            vmWriter.WritePop(VMWriter::POINTER, 0);
 
         } else {
             className = jtok.GetToken();
@@ -724,6 +710,11 @@ void CompilationEngine::CompileSubroutineCall() {
         CheckLiteralSymbol(")", "subroutine call");
 
         const auto fname = className + "." + funcName;
+
+        // naked subroutine calls are method calls by definition, so push "this"
+        vmWriter.WritePush(VMWriter::POINTER, 0);
+        ++expressionCount;
+
         vmWriter.WriteCall(fname, expressionCount);
 
     } else if (jtok.GetToken() == ".") {
@@ -752,6 +743,8 @@ void CompilationEngine::CompileSubroutineCall() {
         CheckLiteralSymbol(")", "subroutine call");
 
         const auto fname = className + "." + funcName;
+        if (isMethod) ++expressionCount;
+
         vmWriter.WriteCall(fname, expressionCount);
 
     } else {

@@ -69,7 +69,27 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WritePop(const std::string& segment, const int index) {
-    std::cerr << "WARNING: stack pop command not yet supported\n";
+    if (regMap.find(segment) != regMap.end()) {
+        PopRegister("D");                               // put val in D reg
+
+        outFile << "@R13\n";                            // load scratch mem
+        outFile << "M=D\n";                             // R13 = val
+        outFile << '@' << index << '\n';                // load index
+        outFile << "D=A\n";                             // D = index
+        outFile << '@' << regMap.at(segment) << '\n';   // load segment
+        outFile << "A=M+D\n";                           // load Seg[index]
+        outFile << "D=A\n";                             // D = addr Seg[index]
+        outFile << "@R14\n";                            // load scratch mem
+        outFile << "M=D\n";                             // R14 = address
+        outFile << "@R13\n";                            // load scratch mem
+        outFile << "D=M\n";                             // D = val
+        outFile << "@R14\n";                            // load scratch mem
+        outFile << "A=M\n";                             // load address
+        outFile << "M=D\n";                             // M[address] = val
+
+    } else {
+        std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
+    }
 }
 
 /* -------------------------------------------------------------------------- */

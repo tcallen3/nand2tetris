@@ -58,6 +58,15 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
         outFile << "@SP\n";               // look up stack pointer
         outFile << "M=D+1\n";             // increment stack pointer
 
+    } else if (registerMap.find(segment) != registerMap.end()) {
+
+        outFile << '@' << index << '\n';                    // load index
+        outFile << "D=A\n";                                 // D=index
+        outFile << '@' << registerMap.at(segment) << '\n';  // load segment
+        outFile << "A=M+D\n";                               // load Seg[index]
+        outFile << "D=M\n";                                 // D = Seg[index]
+        PushStack("D");                                     // push D
+
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
     }
@@ -76,12 +85,12 @@ void CodeWriter::WriteBinaryOp(const std::string& command) {
     const std::string targetReg = "D";
 
     // pop y to D, x to A
-    PopRegister("D");
-    PopRegister("A");
+    PopStack("D");
+    PopStack("A");
 
     WriteOpCommand(command);
 
-    PushRegister(targetReg);
+    PushStack(targetReg);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -91,11 +100,11 @@ void CodeWriter::WriteUnaryOp(const std::string& command) {
     const std::string targetReg = "D";
 
     // pop x to D
-    PopRegister("D");
+    PopStack("D");
 
     WriteOpCommand(command);
 
-    PushRegister(targetReg);
+    PushStack(targetReg);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -134,7 +143,7 @@ void CodeWriter::WriteOpCommand(const std::string& command) {
 
 /* -------------------------------------------------------------------------- */
 
-void CodeWriter::PushRegister(const std::string& reg) {
+void CodeWriter::PushStack(const std::string& reg) {
     outFile << "@SP\n";              // look up stack pointer
     outFile << "A=M\n";              // A = pointer val
     outFile << "M=" << reg << "\n";  // M[val] = reg
@@ -145,7 +154,7 @@ void CodeWriter::PushRegister(const std::string& reg) {
 
 /* -------------------------------------------------------------------------- */
 
-void CodeWriter::PopRegister(const std::string& reg) {
+void CodeWriter::PopStack(const std::string& reg) {
     outFile << "@SP\n";        // look up stack pointer
     outFile << "M=M-1\n";      // decrement SP
     outFile << "@SP\n";        // reload SP

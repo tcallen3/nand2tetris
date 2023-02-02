@@ -254,6 +254,10 @@ void CompilationEngine::CompileSubroutine() {
     // optional parameterList -> variable declaration
     if (jtok.GetToken() != ")") {
         CompileParameterList();
+    } else {
+        // add parameterList tags at same indent to match POR
+        PrintNodeTag("parameterList", OPENING);
+        PrintNodeTag("parameterList", CLOSING);
     }
 
     // literal ')'
@@ -579,6 +583,10 @@ void CompilationEngine::CompileSubroutineCall() {
         // expressionList
         if (jtok.GetToken() != ")") {
             CompileExpressionList();
+        } else {
+            // add empty expression list tags at same indent to match POR
+            PrintNodeTag("expressionList", OPENING);
+            PrintNodeTag("expressionList", CLOSING);
         }
 
         // literal ')'
@@ -603,6 +611,10 @@ void CompilationEngine::CompileSubroutineCall() {
         // expressionList
         if (jtok.GetToken() != ")") {
             CompileExpressionList();
+        } else {
+            // add empty expression list tags at same indent to match POR
+            PrintNodeTag("expressionList", OPENING);
+            PrintNodeTag("expressionList", CLOSING);
         }
 
         // literal ')'

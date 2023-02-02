@@ -81,9 +81,21 @@ void CompilationEngine::CompileClass() {
 
 void CompilationEngine::PrintToken(const std::string& typeName,
                                    const std::string& token) {
+    std::string outputToken = token;
+
+    if (outputToken == "<") {
+        outputToken = "&lt;";
+
+    } else if (outputToken == ">") {
+        outputToken = "&gt;";
+
+    } else if (outputToken == "&") {
+        outputToken = "&amp;";
+    }
+
     outFile << currIndent;
     PrintXMLTag(typeName, OPENING);
-    outFile << " " << token << " ";
+    outFile << " " << outputToken << " ";
     PrintXMLTag(typeName, CLOSING);
 }
 
@@ -549,28 +561,199 @@ void CompilationEngine::CompileIf() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileExpression() {
-    // NOTE: this may need to accept a delimiting string to simplify parsing
+void CompilationEngine::CompileSubroutineCall() {
+    // syntax: subroutineName '(' expressionList ')' |
+    //         (className | varName) '.' subroutineName '(' expressionList ')'
 
-    // TODO: add content
+    // subroutineName | (className | varName) -> identifier checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    if (jtok.GetToken() == "(") {
+        // literal '('
+        PrintLiteralSymbol("(", "subroutine call");
+
+        // expressionList
+        if (jtok.GetToken() != ")") {
+            CompileExpressionList();
+        }
+
+        // literal ')'
+        PrintLiteralSymbol(")", "subroutine call");
+
+    } else if (jtok.GetToken() == ".") {
+        // literal '.'
+        PrintLiteralSymbol(".", "subroutine call");
+
+        // subroutineName -> identifier
+        if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+            const std::string errMsg = "could not parse name in method call";
+            compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+        }
+
+        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        jtok.Advance();
+
+        // literal '('
+        PrintLiteralSymbol("(", "subroutine call");
+
+        // expressionList
+        if (jtok.GetToken() != ")") {
+            CompileExpressionList();
+        }
+
+        // literal ')'
+        PrintLiteralSymbol(")", "subroutine call");
+
+    } else {
+        const std::string errMsg = "Unexpected symbol in subroutine call";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileExpression() {
+    const std::string xmlName = "expression";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: term (op term)*
+
+    // term
+    auto tokenType = jtok.TokenType();
+    if (tokenType == JackTokenizer::INT_CONST ||
+        tokenType == JackTokenizer::STRING_CONST ||
+        tokenType == JackTokenizer::KEYWORD) {
+        CompileTerm();
+    } else if (tokenType == JackTokenizer::IDENTIFIER) {
+        CompileTerm();
+    } else if (jtok.GetToken() == "(") {
+        CompileTerm();
+    } else if (unaryOpTypes.find(jtok.GetToken()) != unaryOpTypes.end()) {
+        CompileTerm();
+    } else {
+        const std::string errMsg = "Unrecognized token in expression";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    // optional operators and terms
+    while (expressionTerminals.find(jtok.GetToken()) ==
+           expressionTerminals.end()) {
+        if (jtok.TokenType() == JackTokenizer::SYMBOL) {
+            // operator
+            if (expressionOpTypes.find(jtok.GetToken()) ==
+                expressionOpTypes.end()) {
+                const std::string errMsg =
+                    "Unrecognized operator in expression";
+                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
+                                            errMsg);
+            }
+
+            PrintLiteralSymbol(jtok.GetToken(), "subroutine call");
+        } else {
+            // term
+            CompileTerm();
+        }
+    }
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileTerm() {
-    // TODO: implement term detection
-}
+    const std::string xmlName = "term";
 
-/* -------------------------------------------------------------------------- */
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
 
-void CompilationEngine::CompileSubroutineCall() {
-    // TODO: add content
+    // syntax: integerConstant | stringConstant | keywordConstant |
+    //         varName | varName '[' expression ']' | subroutineCall |
+    //         '(' expression ')' | unaryOp term
+
+    auto tokenType = jtok.TokenType();
+    if (tokenType == JackTokenizer::INT_CONST ||
+        tokenType == JackTokenizer::STRING_CONST) {
+        // integerConstant | stringConstant
+        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        jtok.Advance();
+
+    } else if (tokenType == JackTokenizer::KEYWORD) {
+        // keywordConstant
+        if (keywordConstants.find(jtok.GetToken()) == keywordConstants.end()) {
+            const std::string errMsg = "Unrecognized keyword in expression";
+            compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+        }
+
+        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        jtok.Advance();
+
+    } else if (tokenType == JackTokenizer::IDENTIFIER) {
+        // need lookahead to distinguish var/array/subroutine calls
+
+        // TODO: work out lookahead
+
+    } else if (jtok.GetToken() == "(") {
+        // '(' expression ')'
+
+        // literal '('
+        PrintLiteralSymbol("(", "expression term");
+
+        // expression
+        CompileExpression();
+
+        // literal ')'
+        PrintLiteralSymbol(")", "expression term");
+
+    } else if (unaryOpTypes.find(jtok.GetToken()) != unaryOpTypes.end()) {
+        // unaryOp
+        PrintLiteralSymbol(jtok.GetToken(), "expression term");
+
+        // term
+        CompileTerm();
+
+    } else {
+        // unrecognized input
+        const std::string errMsg = "Unrecognized token in expression term";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileExpressionList() {
-    // TODO: implement recursive expression list compilation
+    const std::string xmlName = "expressionList";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: (expression(',' expression)*)?
+
+    // NOTE: this syntactic element only appears in subroutine calls and
+    //       the handling in the caller deals with the empty case.
+    //       Additionally, the only terminal in the language rules here is
+    //       a literal ')'.
+
+    // expression
+    CompileExpression();
+
+    // optional comma-separated expressions
+    while (jtok.GetToken() != ")") {
+        if (jtok.GetToken() == ",") {
+            PrintLiteralSymbol(",", "expression list");
+        } else {
+            CompileExpression();
+        }
+    }
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */

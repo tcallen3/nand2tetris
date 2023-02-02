@@ -40,6 +40,12 @@ class CompilationEngine {
     };
 
     const std::set<std::string> validTypes = {"int", "char", "boolean"};
+    const std::set<std::string> unaryOpTypes = {"-", "~"};
+    const std::set<std::string> expressionOpTypes = {"+", "-", "*", "/", "&",
+                                                     "|", "<", ">", "="};
+    const std::set<std::string> expressionTerminals = {"]", ";", ")"};
+    const std::set<std::string> keywordConstants = {"true", "false", "null",
+                                                    "this"};
 
     // methods
   private:
@@ -64,9 +70,9 @@ class CompilationEngine {
     void CompileReturn();
     void CompileIf();
 
+    void CompileSubroutineCall();
     void CompileExpression();
     void CompileTerm();
-    void CompileSubroutineCall();
     void CompileExpressionList();
 };
 

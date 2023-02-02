@@ -4,8 +4,8 @@
 #include "JackTokenizer.h"
 
 #include <fstream>
-#include <string>
 #include <set>
+#include <string>
 
 class CompilationEngine {
   public:
@@ -46,7 +46,8 @@ class CompilationEngine {
     void PrintToken(const std::string& typeName, const std::string& token);
     void PrintXMLTag(const std::string& tagName, TagType type);
     void PrintNodeTag(const std::string& tagName, TagType type);
-    void PrintLiteralSymbol(const std::string& symbol, const std::string& locationDesc);
+    void PrintLiteralSymbol(const std::string& symbol,
+                            const std::string& locationDesc);
 
     void CompileClassVarDec();
     void CompileVarDecCommon(const std::string& terminal);
@@ -65,6 +66,7 @@ class CompilationEngine {
 
     void CompileExpression();
     void CompileTerm();
+    void CompileSubroutineCall();
     void CompileExpressionList();
 };
 

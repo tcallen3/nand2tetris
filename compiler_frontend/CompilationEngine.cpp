@@ -370,6 +370,12 @@ void CompilationEngine::CompileDo() {
     jtok.Advance();
 
     // subroutineCall -> identifier
+    if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg = "Invalid identifier for subroutine call";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    CompileSubroutineCall();
 
     // literal ';'
     PrintLiteralSymbol(";", "subroutine call");
@@ -386,7 +392,39 @@ void CompilationEngine::CompileLet() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
-    // TODO: add content
+    // syntax: 'let' varName ('[' expression ']')? '=' expression ';'
+
+    // 'let' -> checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // varName -> identifier
+    if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg =
+            "Invalid identifier for variable name in let statement";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    // optional brackets
+    if (jtok.GetToken() == "[") {
+        // literal '['
+        PrintLiteralSymbol("[", "array dereference");
+
+        // expression
+        CompileExpression();
+
+        // literal ']'
+        PrintLiteralSymbol("]", "array dereference");
+    }
+
+    // literal '='
+    PrintLiteralSymbol("=", "let statement");
+
+    // expression
+    CompileExpression();
+
+    // literal ';'
+    PrintLiteralSymbol(";", "let statement");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -400,7 +438,31 @@ void CompilationEngine::CompileWhile() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
-    // TODO: add content
+    // syntax: 'while' '(' expression ')' '{' statements '}'
+
+    // 'while' -> checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // literal '('
+    PrintLiteralSymbol("(", "while statement condition");
+
+    // expression
+    CompileExpression();
+
+    // literal ')'
+    PrintLiteralSymbol(")", "while statement condition");
+
+    // literal '{'
+    PrintLiteralSymbol("{", "while statement body");
+
+    // statements
+    while (jtok.GetToken() != "}") {
+        CompileStatements();
+    }
+
+    // literal '}'
+    PrintLiteralSymbol("}", "while statement body");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -440,7 +502,46 @@ void CompilationEngine::CompileIf() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
-    // TODO: add content
+    // syntax: 'if' '(' expression ')' '{' statements '}' ('else' '{' statements
+    // '}')?
+
+    // 'if' -> checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // literal '('
+    PrintLiteralSymbol("(", "if condition");
+
+    // expression
+    CompileExpression();
+
+    // literal ')'
+    PrintLiteralSymbol(")", "if condition");
+
+    // literal '{'
+    PrintLiteralSymbol("{", "if condition body");
+
+    // expression
+    CompileStatements();
+
+    // literal '}'
+    PrintLiteralSymbol("}", "if condition body");
+
+    // optional else clause
+    if (jtok.GetToken() == "else") {
+        // 'else'
+        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        jtok.Advance();
+
+        // literal '{'
+        PrintLiteralSymbol("{", "if condition body");
+
+        // expression
+        CompileStatements();
+
+        // literal '}'
+        PrintLiteralSymbol("}", "if condition body");
+    }
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -448,12 +549,22 @@ void CompilationEngine::CompileIf() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileExpression() {}
+void CompilationEngine::CompileExpression() {
+    // NOTE: this may need to accept a delimiting string to simplify parsing
+
+    // TODO: add content
+}
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileTerm() {
     // TODO: implement term detection
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileSubroutineCall() {
+    // TODO: add content
 }
 
 /* -------------------------------------------------------------------------- */

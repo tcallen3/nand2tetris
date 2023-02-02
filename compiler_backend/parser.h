@@ -23,7 +23,13 @@ enum class Command {
 class Parser {
   public:
     Parser(const std::string& fileName);
+
     // remove unwanted constructors
+    Parser(const Parser& that) = delete;
+    Parser(const Parser&& that) = delete;
+    Parser& operator=(const Parser& that) = delete;
+    Parser& operator=(const Parser&& that) = delete;
+
 
     bool Advance();
     Command CommandType();

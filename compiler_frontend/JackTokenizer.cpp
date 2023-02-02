@@ -48,6 +48,11 @@ void JackTokenizer::AdvanceDriver() {
         }
     }
 
+    if (currLine.empty()) {
+        currTokenType = SPACE;
+        return;
+    }
+
     // skip spaces
     while (currLine[currColumnNum] == ' ' || currLine[currColumnNum] == '\t') {
         ++currColumnNum;
@@ -190,6 +195,7 @@ void JackTokenizer::ParseKeywordIdentifier() {
     currToken = textStream.str();
 
     if (keywordMap.find(currToken) != keywordMap.end()) {
+        currTokenType = KEYWORD;
         currKeyword = keywordMap.at(currToken);
 
     } else {

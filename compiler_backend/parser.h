@@ -4,6 +4,7 @@
 #include <boost/tokenizer.hpp>
 
 #include <fstream>
+#include <map>
 #include <set>
 #include <string>
 
@@ -52,8 +53,12 @@ class Parser {
     const std::set<std::string> arithmeticCommands = {
         "add", "sub", "eq", "gt", "lt", "and", "or", "neg", "not"};
 
-    const std::string pushCommand = "push";
-    const std::string popCommand = "pop";
+    const std::map<std::string, Command> controlCommands = {
+        {"push", Command::PUSH},
+        {"pop", Command::POP},
+        {"label", Command::LABEL},
+        {"goto", Command::GOTO},
+        {"if-goto", Command::IF}};
 };
 
 #endif /* PARSER_H */

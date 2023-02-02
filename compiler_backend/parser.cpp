@@ -59,11 +59,8 @@ Command Parser::CommandType() {
     if (arithmeticCommands.find(command) != arithmeticCommands.end()) {
         return Command::ARITHMETIC;
 
-    } else if (command == pushCommand) {
-        return Command::PUSH;
-
-    } else if (command == popCommand) {
-        return Command::POP;
+    } else if (controlCommands.find(command) != controlCommands.end()) {
+        return controlCommands.at(command);
 
     } else if (command.empty()) {
         return Command::EMPTY;

@@ -21,6 +21,9 @@ class CodeWriter {
     void WriteArithmetic(const std::string& command);
     void WritePushPop(const Command ptype, const std::string& segment,
                       const int index);
+    void WriteLabel(const std::string& label);
+    void WriteGoto(const std::string& label);
+    void WriteIf(const std::string& label);
 
   private:
     int jumpIndex;

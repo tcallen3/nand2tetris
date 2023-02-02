@@ -152,6 +152,30 @@ void CodeWriter::PopFixed(const std::string& segment, const int index,
 
 /* -------------------------------------------------------------------------- */
 
+void CodeWriter::WriteLabel(const std::string& label) {
+    outFile << '(' << label << ")\n";
+}
+
+/* -------------------------------------------------------------------------- */
+
+// unconditional jump
+void CodeWriter::WriteGoto(const std::string& label) {
+    outFile << '@' << label << '\n';
+    outFile << "0;JMP\n";
+}
+
+/* -------------------------------------------------------------------------- */
+
+// conditional jump (jump if stack entry != 0)
+void CodeWriter::WriteIf(const std::string& label) {
+    PopRegister("D");
+
+    outFile << '@' << label << '\n';
+    outFile << "D;JNE\n";
+}
+
+/* -------------------------------------------------------------------------- */
+
 void CodeWriter::WriteBinaryOp(const std::string& command) {
     // push result from D
     const std::string targetReg = "D";

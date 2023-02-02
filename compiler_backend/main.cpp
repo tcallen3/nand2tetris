@@ -73,6 +73,15 @@ void TranslateVMFile(Parser& parser, CodeWriter& writer) {
             int index = std::stoi(parser.SecondArg());
             writer.WritePushPop(currCommand, parser.FirstArg(), index);
 
+        } else if (currCommand == Command::LABEL) {
+            writer.WriteLabel(parser.FirstArg());
+
+        } else if (currCommand == Command::GOTO) {
+            writer.WriteGoto(parser.FirstArg());
+
+        } else if (currCommand == Command::IF) {
+            writer.WriteIf(parser.FirstArg());
+
         } else {
             std::cerr << "WARNING: Unsupported command type\n";
         }

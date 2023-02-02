@@ -53,12 +53,12 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
         outFile << "D=A\n";               // transfer to register
         PushRegister("D");
 
-    } else if (regMap.find(segment) != regMap.end()){
-        outFile << '@' << index << '\n';
-        outFile << "D=A\n";
-        outFile << '@' << regMap.at(segment) << '\n';
-        outFile << "A=M+D\n";
-        outFile << "D=M\n";
+    } else if (regMap.find(segment) != regMap.end()) {
+        outFile << '@' << index << '\n';               // load index
+        outFile << "D=A\n";                            // D = index
+        outFile << '@' << regMap.at(segment) << '\n';  // load segment
+        outFile << "A=M+D\n";                          // load Seg[index]
+        outFile << "D=M\n";                            // D = Seg[index]
         PushRegister("D");
 
     } else {

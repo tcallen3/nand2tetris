@@ -8,7 +8,7 @@
 
 class Assembler {
     public:
-        Assembler(const std::string & input);
+        explicit Assembler(const std::string & input);
         ~Assembler() {}
 
         Assembler(const Assembler &) = delete;

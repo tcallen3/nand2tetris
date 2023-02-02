@@ -26,16 +26,8 @@ bool Parser::Advance() {
 
     if (!inFile.good()) return false;
 
-    // !! BEGIN DEBUG !!
-    std::cout << "Line read: " << currLine << '\n';
-    // !! END DEBUG !!
-
     size_t commentPos = currLine.find(commentInitializer);
     std::string workingLine = currLine.substr(0, commentPos);
-
-    // !! BEGIN DEBUG !!
-    std::cout << "After comment strip: " << workingLine << '\n';
-    // !! END DEBUG !!
 
     tokenizer tok(workingLine, sep);
     auto tokIter = tok.begin();
@@ -57,12 +49,6 @@ bool Parser::Advance() {
             ++tokIter;
         }
     }
-
-    // !! BEGIN DEBUG !!
-    std::cout << "At end of Advance(), command: " << command << '\n';
-    std::cout << "At end of Advance(), arg1: " << arg1 << '\n';
-    std::cout << "At end of Advance(), arg2: " << arg2 << '\n';
-    // !! END DEBUG !!
 
     return true;
 }

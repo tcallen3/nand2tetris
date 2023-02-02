@@ -43,7 +43,7 @@ class CompilationEngine {
     const std::set<std::string> unaryOpTypes = {"-", "~"};
     const std::set<std::string> expressionOpTypes = {"+", "-", "*", "/", "&",
                                                      "|", "<", ">", "="};
-    const std::set<std::string> expressionTerminals = {"]", ";", ")"};
+    const std::set<std::string> expressionTerminals = {"]", ";", ",", ")"};
     const std::set<std::string> keywordConstants = {"true", "false", "null",
                                                     "this"};
 

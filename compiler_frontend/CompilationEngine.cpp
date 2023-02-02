@@ -417,6 +417,9 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
     // optional brackets
     if (jtok.GetToken() == "[") {
         // literal '['

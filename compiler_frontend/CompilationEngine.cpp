@@ -33,6 +33,9 @@ void CompilationEngine::Compile() {
     const std::map<std::string, std::string> specialChars = {
         {"<", "&lt;"}, {">", "&gt;"}, {"&", "&amp;"}};
 
+    // read initial token
+    jtok.Advance();
+
     while (jtok.HasMoreTokens()) {
         auto tokenType = jtok.TokenType();
         if (xmlMap.find(tokenType) == xmlMap.end()) {
@@ -51,6 +54,8 @@ void CompilationEngine::Compile() {
         outFile << " " << currToken << " ";
 
         PrintXMLTag(xmlMap.at(tokenType), CLOSING);
+
+        jtok.Advance();
     }
 
     // close tree root

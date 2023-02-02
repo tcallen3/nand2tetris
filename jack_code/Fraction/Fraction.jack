@@ -1,0 +1,57 @@
+/** Provides the Fraction type and related services */
+class Fraction {
+    field int numerator, denominator;
+
+    /** Constructs a new (and reduced) fraction from given
+        numerator and denominator. */
+    constructor Fraction new(int a, int b) {
+        let numerator = a; let denominator = b;
+        do reduce();    // if a/b is not reduced, simplify it
+        return this;
+    }
+
+    /** Reduces this fraction */
+    method void reduce() {
+        var int g;
+        let g = Fraction.gcd(numerator, denominator);
+        if (g > 1) {
+            let numerator = numerator / g;
+            let denominator = denominator / g;
+        }
+        return;
+    }
+
+    /** Computes the gcd of a and b */
+    function int gcd(int a, int b) {
+        var int r;
+        while (~(b = 0)) {          // apply Euclid algorithm
+            let r = a - (b * (a/b)) // r = remainder
+            let a = b; let b = r;
+        }
+        return a;
+    }
+
+    /** Accessors */
+    method int getNumerator() { return numerator; }
+    method int getDenominator() { return denominator; }
+
+    /** Returns the sum of fractions */
+    method Fraction plus(Fraction other) {
+        var int sum;
+        let sum = (numerator * other.getDenominator()) +
+                  (other.getNumerator() + denominator);
+        return Fraction.new(sum, denominator *
+               other.getDenominator());
+    }
+
+    // TODO: implement other methods - minus, times, div, etc.
+
+    /** Prints this fraction. */
+    method void print() {
+        do Output.printInt(numerator);
+        do Output.printString("/");
+        do Output.printInt(denominator);
+        return;
+    }
+
+} // Fraction class

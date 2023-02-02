@@ -27,7 +27,6 @@ int main(int argc, char* argv[]) {
             compiler.Compile();
 
         } else if (fs::is_directory(inputPath)) {
-
             for (auto& p : fs::directory_iterator(inputPath)) {
                 auto path = p.path();
                 if (path.extension() == inExt) {

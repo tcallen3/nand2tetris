@@ -25,10 +25,9 @@ class CompilationEngine {
     JackTokenizer jtok;
     ErrorHandler compilerErrorHandler;
 
-    enum TagType {OPENING, CLOSING};
+    enum TagType { OPENING, CLOSING };
 
     void PrintXMLTag(const std::string& tagName, TagType type);
-
 };
 
 #endif /* COMPILATION_ENGINE_H */

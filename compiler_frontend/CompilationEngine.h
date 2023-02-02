@@ -1,7 +1,9 @@
 #ifndef COMPILATION_ENGINE_H
 #define COMPILATION_ENGINE_H
 
+#include "ErrorHandler.h"
 #include "JackTokenizer.h"
+#include "SymbolTable.h"
 
 #include <fstream>
 #include <set>
@@ -26,8 +28,12 @@ class CompilationEngine {
     std::ofstream outFile;
     JackTokenizer jtok;
     ErrorHandler compilerErrorHandler;
+    SymbolTable symTable;
 
     enum TagType { OPENING, CLOSING };
+
+    enum Category { VAR, ARGUMENT, STATIC, FIELD, CLASS, SUBROUTINE };
+    enum Status { USED, DEFINED };
 
     std::string currIndent;
 
@@ -38,6 +44,10 @@ class CompilationEngine {
         {JackTokenizer::INT_CONST, "integerConstant"},
         {JackTokenizer::STRING_CONST, "stringConstant"},
     };
+
+    const std::map<Category, std::string> categoryNames = {
+        {VAR, "var"},     {ARGUMENT, "argument"}, {STATIC, "static"},
+        {FIELD, "field"}, {CLASS, "class"},       {SUBROUTINE, "subroutine"}};
 
     const std::set<std::string> validTypes = {"int", "char", "boolean"};
     const std::set<std::string> unaryOpTypes = {"-", "~"};
@@ -54,9 +64,11 @@ class CompilationEngine {
     void PrintNodeTag(const std::string& tagName, TagType type);
     void PrintLiteralSymbol(const std::string& symbol,
                             const std::string& locationDesc);
+    void PrintIdentifier(const Category category, const Status status);
 
     void CompileClassVarDec();
-    void CompileVarDecCommon(const std::string& terminal);
+    void CompileVarDecCommon(const std::string& terminal,
+                             const Category category);
     void CompileSubroutine();
     void CompileParameterList();
     void CompileSubroutineBody();

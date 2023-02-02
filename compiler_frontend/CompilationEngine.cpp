@@ -47,7 +47,7 @@ void CompilationEngine::CompileClass() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    PrintIdentifier(CLASS, DEFINED);
     jtok.Advance();
 
     // '{' literal
@@ -146,6 +146,43 @@ void CompilationEngine::PrintLiteralSymbol(const std::string& symbol,
 
 /* -------------------------------------------------------------------------- */
 
+void CompilationEngine::PrintIdentifier(const Category category,
+                                        const Status status) {
+    outFile << currIndent;
+
+    outFile << '<';
+    outFile << categoryNames.at(category);
+
+    outFile << " ";
+    outFile << "status=";
+
+    if (status == DEFINED) {
+        outFile << "\"defined\" ";
+    } else {
+        outFile << "\"used\" ";
+    }
+
+    outFile << "isVar=";
+
+    if (category == VAR || category == ARGUMENT || category == STATIC ||
+        category == FIELD) {
+        outFile << "\"true\" ";
+        outFile << "index=";
+
+        outFile << "\"" << symTable.IndexOf(jtok.GetToken()) << "\"";
+    } else {
+        outFile << "\"false\"";
+    }
+
+    outFile << '>';
+
+    outFile << " " << jtok.GetToken() << " ";
+
+    outFile << "</" << categoryNames.at(category) << ">\n";
+}
+
+/* -------------------------------------------------------------------------- */
+
 void CompilationEngine::CompileClassVarDec() {
     const std::string xmlName = "classVarDec";
 
@@ -157,9 +194,12 @@ void CompilationEngine::CompileClassVarDec() {
     // static/field dec (already selected in caller)
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
 
+    // determine variable category
+    const Category category = (jtok.GetToken() == "static") ? STATIC : FIELD;
+
     jtok.Advance();
 
-    CompileVarDecCommon(";");
+    CompileVarDecCommon(";", category);
 
     // terminal semicolon
     if (jtok.GetToken() != ";") {
@@ -176,13 +216,36 @@ void CompilationEngine::CompileClassVarDec() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
+void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
+                                            const Category category) {
+    // store variable info
+    SymbolTable::VarData data;
+    if (category == VAR) {
+        data.kind = SymbolTable::VAR;
+
+    } else if (category == ARGUMENT) {
+        data.kind = SymbolTable::ARG;
+
+    } else if (category == STATIC) {
+        data.kind = SymbolTable::STATIC;
+
+    } else if (category == FIELD) {
+        data.kind = SymbolTable::FIELD;
+
+    } else {
+        const std::string errMsg =
+            "Unsupported variable category in variable declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
     // type must be int, char, boolean, or class ID
     if (validTypes.find(jtok.GetToken()) == validTypes.end() &&
         jtok.TokenType() != JackTokenizer::IDENTIFIER) {
         const std::string errMsg = "Invalid type for variable declaration";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
+
+    data.type = jtok.GetToken();
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
@@ -193,7 +256,11 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // add to symbol table
+    symTable.Define(jtok.GetToken(), data.type, data.kind);
+
+    // print
+    PrintIdentifier(category, DEFINED);
     jtok.Advance();
 
     // optional comma-separated identifiers
@@ -206,13 +273,19 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
 
-        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        if (jtok.TokenType() == JackTokenizer::IDENTIFIER) {
+            PrintIdentifier(category, DEFINED);
+        } else {
+            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        }
+
         jtok.Advance();
     }
 }
 
 /* -------------------------------------------------------------------------- */
 
+// TODO: print out subroutine name using special format
 void CompilationEngine::CompileSubroutine() {
     const std::string xmlName = "subroutineDec";
 
@@ -281,7 +354,7 @@ void CompilationEngine::CompileParameterList() {
 
     // syntax: ((type varName) (',' type varName)*)?
     // note that this is the same (apart from parens) as standard var dec
-    CompileVarDecCommon(")");
+    CompileVarDecCommon(")", ARGUMENT);
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -331,7 +404,7 @@ void CompilationEngine::CompileVarDec() {
     jtok.Advance();
 
     // type, etc.
-    CompileVarDecCommon(";");
+    CompileVarDecCommon(";", VAR);
 
     // literal ';'
     PrintLiteralSymbol(";", "variable declaration");
@@ -374,6 +447,7 @@ void CompilationEngine::CompileStatements() {
 
 /* -------------------------------------------------------------------------- */
 
+// TODO: special printing format
 void CompilationEngine::CompileDo() {
     const std::string xmlName = "doStatement";
 
@@ -403,6 +477,7 @@ void CompilationEngine::CompileDo() {
 
 /* -------------------------------------------------------------------------- */
 
+// TODO: special printing format
 void CompilationEngine::CompileLet() {
     const std::string xmlName = "letStatement";
 
@@ -569,6 +644,7 @@ void CompilationEngine::CompileIf() {
 
 /* -------------------------------------------------------------------------- */
 
+// TODO: special printing format
 void CompilationEngine::CompileSubroutineCall() {
     // syntax: subroutineName '(' expressionList ')' |
     //         (className | varName) '.' subroutineName '(' expressionList ')'
@@ -673,6 +749,7 @@ void CompilationEngine::CompileExpression() {
 
 /* -------------------------------------------------------------------------- */
 
+// TODO: special printing format
 void CompilationEngine::CompileTerm() {
     const std::string xmlName = "term";
 

@@ -16,6 +16,18 @@ class SymbolTable {
 
     enum VARKIND { STATIC, FIELD, ARG, VAR };
 
+    struct VarData {
+        std::string type;
+        VARKIND kind;
+        int index;
+
+        VarData() : type(), kind(), index(-1) {}
+        VarData(const std::string& t, const VARKIND k, const int i) :
+                type(t),
+                kind(k),
+                index(i) {}
+    };
+
     void StartSubroutine() { subroutineTable.clear(); }
 
     void Define(const std::string& name, const std::string& type,
@@ -32,18 +44,6 @@ class SymbolTable {
     int fieldVarCount;
     int argVarCount;
     int plainVarCount;
-
-    struct VarData {
-        std::string type;
-        VARKIND kind;
-        int index;
-
-        VarData() : type(), kind(), index(-1) {}
-        VarData(const std::string& t, const VARKIND k, const int i) :
-                type(t),
-                kind(k),
-                index(i) {}
-    };
 
     std::map<std::string, VarData> classTable;
     std::map<std::string, VarData> subroutineTable;

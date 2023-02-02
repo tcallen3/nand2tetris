@@ -30,6 +30,9 @@ class CodeWriter {
     const std::string pushCommand = "push";
     const std::string popCommand = "pop";
     const std::string constSegment = "constant";
+    const std::string tempSegment = "temp";
+    const int tempBase = 5;
+    const int tempMaxOffset = 7;
 
     const std::set<std::string> binaryCommands = {"add", "sub", "eq", "gt",
                                                   "lt",  "and", "or"};

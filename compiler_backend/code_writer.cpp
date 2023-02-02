@@ -61,6 +61,18 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
         outFile << "D=M\n";                            // D = Seg[index]
         PushRegister("D");
 
+    } else if (segment == tempSegment) {
+        if (index > tempMaxOffset) {
+            std::cerr << "WARNING: attempt to push invalid temp offset\n";
+            return;
+        }
+
+        const int address = tempBase + index;
+
+        outFile << '@' << address << '\n';
+        outFile << "D=M\n";
+        PushRegister("D");
+
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
     }
@@ -86,6 +98,19 @@ void CodeWriter::WritePop(const std::string& segment, const int index) {
         outFile << "@R14\n";                            // load scratch mem
         outFile << "A=M\n";                             // load address
         outFile << "M=D\n";                             // M[address] = val
+
+    } else if (segment == tempSegment) {
+        if (index > tempMaxOffset) {
+            std::cerr << "WARNING: attempt to pop invalid offset\n";
+            return;
+        }
+
+        const int address = tempBase + index;
+
+        PopRegister("D");
+
+        outFile << '@' << address << '\n';
+        outFile << "M=D\n";
 
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";

@@ -58,6 +58,14 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
         outFile << "@SP\n";               // look up stack pointer
         outFile << "M=D+1\n";             // increment stack pointer
 
+    } else if (regMap.find(segment) != regMap.end()){
+        outFile << '@' << index << '\n';
+        outFile << "D=A\n";
+        outFile << '@' << regMap.at(segment) << '\n';
+        outFile << "A=M+D\n";
+        outFile << "D=M\n";
+        PushRegister("D");
+
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
     }

@@ -3,6 +3,7 @@
 
 #include "parser.h"
 
+#include <map>
 #include <set>
 #include <string>
 
@@ -34,6 +35,11 @@ class CodeWriter {
                                                   "lt",  "and", "or"};
 
     const std::set<std::string> unaryCommands = {"neg", "not"};
+
+    const std::map<std::string, std::string> regMap = {{"local", "LCL"},
+                                                       {"argument", "ARG"},
+                                                       {"this", "THIS"},
+                                                       {"that", "THAT"}};
 
     // methods
     void WritePush(const std::string& segment, const int index);

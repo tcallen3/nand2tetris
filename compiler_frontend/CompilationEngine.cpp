@@ -478,7 +478,6 @@ void CompilationEngine::CompileDo() {
 
 /* -------------------------------------------------------------------------- */
 
-// TODO: special printing format
 void CompilationEngine::CompileLet() {
     const std::string xmlName = "letStatement";
 
@@ -505,9 +504,11 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    // TODO: more
+    auto kind = symTable.KindOf(varName);
+    const Category category = kindMap.at(kind);
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    PrintIdentifier(category, USED);
+
     jtok.Advance();
 
     // optional brackets

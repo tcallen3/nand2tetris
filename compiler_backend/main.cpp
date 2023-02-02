@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
             outName += outExt;
 
             CodeWriter writer(outName);
-            writer.SetFileName(inputPath.filename());
+            writer.SetFileName(inputPath.stem());
             Parser parser(inputPath.filename());
 
             TranslateVMFile(parser, writer);

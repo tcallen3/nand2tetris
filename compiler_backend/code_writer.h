@@ -33,6 +33,7 @@ class CodeWriter {
     const std::string constSegment = "constant";
     const std::string tempSegment = "temp";
     const std::string pointerSegment = "pointer";
+    const std::string staticSegment = "static";
 
     const int tempBase = 5;
     const int tempMaxOffset = 7;

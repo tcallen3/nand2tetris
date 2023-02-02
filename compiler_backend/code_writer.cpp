@@ -67,6 +67,11 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
     } else if (segment == pointerSegment) {
         PushFixed(segment, index, pointerBase, pointerMaxOffset);
 
+    } else if (segment == staticSegment) {
+        outFile << '@' << infileName << '.' << index << '\n';
+        outFile << "D=M\n";
+        PushRegister("D");
+
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
     }
@@ -115,6 +120,12 @@ void CodeWriter::WritePop(const std::string& segment, const int index) {
 
     } else if (segment == pointerSegment) {
         PopFixed(segment, index, pointerBase, pointerMaxOffset);
+
+    } else if (segment == staticSegment) {
+        PopRegister("D");
+
+        outFile << '@' << infileName << '.' << index << '\n';
+        outFile << "M=D\n";
 
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";

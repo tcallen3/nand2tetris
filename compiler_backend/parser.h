@@ -30,7 +30,6 @@ class Parser {
     Parser& operator=(const Parser& that) = delete;
     Parser& operator=(const Parser&& that) = delete;
 
-
     bool Advance();
     Command CommandType();
     std::string CommandText();

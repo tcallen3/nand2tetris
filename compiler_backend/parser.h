@@ -58,7 +58,10 @@ class Parser {
         {"pop", Command::POP},
         {"label", Command::LABEL},
         {"goto", Command::GOTO},
-        {"if-goto", Command::IF}};
+        {"if-goto", Command::IF},
+        {"function", Command::FUNCTION},
+        {"call", Command::CALL},
+        {"return", Command::RETURN}};
 };
 
 #endif /* PARSER_H */

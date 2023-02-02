@@ -7,6 +7,7 @@
 
 CodeWriter::CodeWriter(const std::string& outName) :
         jumpIndex(0),
+        returnIndex(0),
         outFile(outName),
         infileName("XXX"),
         currFunction() {
@@ -15,6 +16,19 @@ CodeWriter::CodeWriter(const std::string& outName) :
         std::cerr << "ERROR: Could not open output file " << outName << '\n';
         std::exit(EXIT_FAILURE);
     }
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::WriteInit() {
+    // write stack start
+    outFile << "@256\n";
+    outFile << "D=A\n";
+    outFile << "@SP\n";
+    outFile << "M=D\n";
+
+    // call Sys.init
+    WriteCall("Sys.init", 0);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -178,31 +192,53 @@ void CodeWriter::WriteIf(const std::string& label) {
 
 /* -------------------------------------------------------------------------- */
 
-void CodeWriter::WriteBinaryOp(const std::string& command) {
-    // push result from D
-    const std::string targetReg = "D";
+void CodeWriter::WriteCall(const std::string& functionName, int nArgs) {
 
+    // TODO
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::WriteFunction(const std::string& functionName, int nLocals) {
+    WriteLabel(functionName);
+
+    for (int i = 0; i < nLocals; ++i) {
+        WritePush(constSegment, 0);
+    }
+
+    currFunction.push(functionName);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::WriteReturn() {
+
+    // TODO
+
+    currFunction.pop();
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::WriteBinaryOp(const std::string& command) {
     // pop y to D, x to A
     PopRegister("D");
     PopRegister("A");
 
     WriteOpCommand(command);
 
-    PushRegister(targetReg);
+    PushRegister("D");
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteUnaryOp(const std::string& command) {
-    // push result from D
-    const std::string targetReg = "D";
-
     // pop x to D
     PopRegister("D");
 
     WriteOpCommand(command);
 
-    PushRegister(targetReg);
+    PushRegister("D");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -242,9 +278,10 @@ void CodeWriter::WriteOpCommand(const std::string& command) {
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::PushRegister(const std::string& reg) {
+    outFile << "D=" << reg << '\n';  // save register value
     outFile << "@SP\n";              // look up stack pointer
     outFile << "A=M\n";              // A = pointer val
-    outFile << "M=" << reg << "\n";  // M[val] = reg
+    outFile << "M=D\n";              // M[val] = reg
     outFile << "D=A\n";              // D = val
     outFile << "@SP\n";              // look up stack pointer
     outFile << "M=D+1\n";            // increment stack pointer

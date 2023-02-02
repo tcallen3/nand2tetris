@@ -19,15 +19,20 @@ class CodeWriter {
     CodeWriter& operator=(const CodeWriter&& that) = delete;
 
     void SetFileName(const std::string& fname) { infileName = fname; }
+    void WriteInit();
     void WriteArithmetic(const std::string& command);
     void WritePushPop(const Command ptype, const std::string& segment,
                       const int index);
     void WriteLabel(const std::string& label);
     void WriteGoto(const std::string& label);
     void WriteIf(const std::string& label);
+    void WriteCall(const std::string& functionName, int nArgs);
+    void WriteFunction(const std::string& functionName, int nLocals);
+    void WriteReturn();
 
   private:
     int jumpIndex;
+    int returnIndex;
     std::ofstream outFile;
     std::string infileName;
     std::stack<std::string> currFunction;

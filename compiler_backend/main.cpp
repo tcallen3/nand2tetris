@@ -28,17 +28,21 @@ int main(int argc, char* argv[]) {
             writer.SetFileName(inputPath.stem());
             Parser parser(inputPath.filename());
 
+            writer.WriteInit();
+
             TranslateVMFile(parser, writer);
 
         } else if (fs::is_directory(inputPath)) {
-            // assumes compiler is called on relative path of dir
-            // i.e. using -> ./parser mydir
+            // assumes translator is called on relative path of dir
+            // i.e. using -> ./VMTranslator mydir
             fs::path outPath =
                 inputPath.parent_path() / inputPath.parent_path();
             outName = outPath;
             outName += outExt;
 
             CodeWriter writer(outName);
+
+            writer.WriteInit();
 
             for (auto& p : fs::directory_iterator(inputPath)) {
                 Parser parser(p.path());
@@ -81,6 +85,17 @@ void TranslateVMFile(Parser& parser, CodeWriter& writer) {
 
         } else if (currCommand == Command::IF) {
             writer.WriteIf(parser.FirstArg());
+
+        } else if (currCommand == Command::FUNCTION) {
+            int nLocals = std::stoi(parser.SecondArg());
+            writer.WriteFunction(parser.FirstArg(), nLocals);
+
+        } else if (currCommand == Command::CALL) {
+            int nArgs = std::stoi(parser.SecondArg());
+            writer.WriteCall(parser.FirstArg(), nArgs);
+
+        } else if (currCommand == Command::RETURN) {
+            writer.WriteReturn();
 
         } else {
             std::cerr << "WARNING: Unsupported command type\n";

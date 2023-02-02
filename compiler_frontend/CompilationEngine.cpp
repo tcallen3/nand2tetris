@@ -498,12 +498,14 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    /*
-        const std::string varName = jtok.GetToken();
-        if (!symTable.Check(varName)) {
+    const std::string varName = jtok.GetToken();
+    if (!symTable.Check(varName)) {
+        const std::string errMsg =
+            "Variable " + varName + " not defined in current scope";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
 
-        }
-    */
+    // TODO: more
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
@@ -665,22 +667,7 @@ void CompilationEngine::CompileSubroutineCall() {
         const std::string varName = jtok.GetToken();
         if (symTable.Check(varName)) {
             SymbolTable::VARKIND kind = symTable.KindOf(varName);
-            Category category;
-
-            if (kind == SymbolTable::VAR) {
-                category = VAR;
-            } else if (kind == SymbolTable::FIELD) {
-                category = FIELD;
-            } else if (kind == SymbolTable::STATIC) {
-                category = STATIC;
-            } else if (kind == SymbolTable::ARG) {
-                category = ARGUMENT;
-            } else {
-                const std::string errMsg =
-                    "Unrecognized variable category in subroutine call";
-                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
-                                            errMsg);
-            }
+            Category category = kindMap.at(kind);
 
             PrintIdentifier(category, USED);
 

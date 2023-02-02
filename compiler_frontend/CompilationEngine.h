@@ -49,6 +49,12 @@ class CompilationEngine {
         {VAR, "var"},     {ARGUMENT, "argument"}, {STATIC, "static"},
         {FIELD, "field"}, {CLASS, "class"},       {SUBROUTINE, "subroutine"}};
 
+    const std::map<SymbolTable::VARKIND, Category> kindMap = {
+        {SymbolTable::VAR, VAR},
+        {SymbolTable::ARG, ARGUMENT},
+        {SymbolTable::FIELD, FIELD},
+        {SymbolTable::STATIC, STATIC}};
+
     const std::set<std::string> validTypes = {"int", "char", "boolean"};
     const std::set<std::string> unaryOpTypes = {"-", "~"};
     const std::set<std::string> expressionOpTypes = {"+", "-", "*", "/", "&",

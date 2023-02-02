@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#include <iostream>
+
 using tokenizer = boost::tokenizer<boost::char_separator<char> >;
 
 /* -------------------------------------------------------------------------- */
@@ -9,10 +11,11 @@ Parser::Parser(const std::string& fileName) :
         currLine(),
         command(),
         arg1(),
-        arg2() {
+        arg2(),
+        sep(" \t\r\n") {
     if (!inFile.is_open()) {
-        std::err << "ERROR: Could not open file \"" << fileName << "\"\n";
-        std::exti(EXIT_FAILURE);
+        std::cerr << "ERROR: Could not open file \"" << fileName << "\"\n";
+        std::exit(EXIT_FAILURE);
     }
 }
 

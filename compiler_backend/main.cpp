@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 
 const std::string outExt = ".asm";
 
-TranslateVMFile(Parser& parser, CodeWriter& writer);
+void TranslateVMFile(Parser& parser, CodeWriter& writer);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
             // i.e. using -> ./parser mydir
             fs::path outPath =
                 inputPath.parent_path() / inputPath.parent_path();
-            outName = outPath + outExt;
+            outName = outPath;
+            outName += outExt;
 
             CodeWriter writer(outName);
 
@@ -59,9 +60,9 @@ int main(int argc, char* argv[]) {
 
 /* -------------------------------------------------------------------------- */
 
-TranslateVMFile(Parser& parser, CodeWriter& writer) {
+void TranslateVMFile(Parser& parser, CodeWriter& writer) {
     while (parser.Advance()) {
-        Command currCommand = parser.Command();
+        Command currCommand = parser.CommandType();
         if (currCommand == Command::ARITHMETIC) {
             writer.WriteArithmetic(parser.CommandText());
 

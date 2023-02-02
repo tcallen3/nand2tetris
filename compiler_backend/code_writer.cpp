@@ -1,6 +1,7 @@
 #include "code_writer.h"
 
 #include <cstdlib>
+#include <iostream>
 
 /* -------------------------------------------------------------------------- */
 
@@ -33,15 +34,14 @@ void CodeWriter::WriteArithmetic(const std::string& command) {
 
 void CodeWriter::WritePushPop(const Command ptype, const std::string& segment,
                               const int index) {
-    if (ptype == pushCommand) {
+    if (ptype == Command::PUSH) {
         WritePush(segment, index);
 
-    } else if (ptype == popCommand) {
+    } else if (ptype == Command::POP) {
         WritePop(segment, index);
 
     } else {
-        std::cerr << "WARNING: Unrecognized stack command \"" << ptype
-                  << "\"\n";
+        std::cerr << "WARNING: Unrecognized stack command\n";
     }
 }
 
@@ -95,63 +95,41 @@ void CodeWriter::WriteUnaryOp(const std::string& command) {
 
     WriteOpCommand(command);
 
-    PushRegister(targetReg)
+    PushRegister(targetReg);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteOpCommand(const std::string& command) {
-    switch (command) {
-        case "add":
+    if (command == "add")
+        outFile << "D=A+D\n";
 
-            outFile << "D=A+D\n";
-            break;
+    else if (command == "sub")
+        outFile << "D=A-D\n";
 
-        case "sub":
+    else if (command == "eq")
+        WriteComparison("JEQ");
 
-            outFile << "D=A-D\n";
-            break;
+    else if (command == "gt")
+        WriteComparison("JGT");
 
-        case "eq":
+    else if (command == "lt")
+        WriteComparison("JLT");
 
-            WriteComparison("JEQ");
-            break;
+    else if (command == "and")
+        outFile << "D=A&D\n";
 
-        case "gt":
+    else if (command == "or")
+        outFile << "D=A|D\n";
 
-            WriteComparison("JGT");
-            break;
+    else if (command == "neg")
+        outFile << "D=-D\n";
 
-        case "lt":
+    else if (command == "not")
+        outFile << "D=!D\n";
 
-            WriteComparison("JLT");
-            break;
-
-        case "and":
-
-            outFile << "D=A&D\n";
-            break;
-
-        case "or":
-
-            outFile << "D=A|D\n";
-            break;
-
-        case "neg":
-
-            outFile << "D=-D\n";
-            break;
-
-        case "not":
-
-            outFile << "D=!D\n";
-            break;
-
-        default:
-            std::cerr << "WARNING: Unrecognized operator \"" << command
-                      << "\"\n";
-            break;
-    }
+    else
+        std::cerr << "WARNING: Unrecognized operator \"" << command << "\"\n";
 }
 
 /* -------------------------------------------------------------------------- */

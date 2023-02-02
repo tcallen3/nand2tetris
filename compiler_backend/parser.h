@@ -4,6 +4,7 @@
 #include <boost/tokenizer.hpp>
 
 #include <fstream>
+#include <set>
 #include <string>
 
 enum class Command {
@@ -44,7 +45,7 @@ class Parser {
     std::string arg1;
     std::string arg2;
 
-    boost::char_separator<char> sep(" \t\r\n");
+    boost::char_separator<char> sep;
 
     const std::string commentInitializer = "//";
 

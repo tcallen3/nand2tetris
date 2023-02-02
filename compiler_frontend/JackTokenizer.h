@@ -119,6 +119,7 @@ class JackTokenizer {
 
     // methods
   private:
+    void AdvanceDriver();
     void ReadNextLine();
     void ParseDelimitedComment();
     void ParseStringLiteral();

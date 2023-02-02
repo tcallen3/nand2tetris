@@ -1,6 +1,7 @@
 #include "JackTokenizer.h"
 
 #include <cctype>
+#include <cstdlib>
 #include <sstream>
 
 /* -------------------------------------------------------------------------- */
@@ -17,7 +18,8 @@ JackTokenizer::JackTokenizer(const std::string& fileName) :
         currSymbol(),
         currIdentifier(),
         currIntVal(),
-        currStringVal() {
+        currStringVal(),
+        tokErrHandler() {
     if (!inFile.is_open()) {
         std::cerr << "ERROR: Could not open file \"" << fileName << "\"\n";
         std::exit(EXIT_FAILURE);
@@ -27,6 +29,14 @@ JackTokenizer::JackTokenizer(const std::string& fileName) :
 /* -------------------------------------------------------------------------- */
 
 void JackTokenizer::Advance() {
+    do {
+        AdvanceDriver();
+    } while (currTokenType == COMMENT || currTokenType == SPACE)
+}
+
+/* -------------------------------------------------------------------------- */
+
+void JackTokenizer::AdvanceDriver() {
     // read new line if necessary and check for EOF
     if (currLine.empty() || currColumnNum >= currLine.size()) {
         ReadNextLine();

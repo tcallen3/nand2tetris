@@ -272,6 +272,8 @@ void CodeWriter::WriteReturn() {
     outFile << "@R13\n";
     outFile << "A=M\n";
     outFile << "D=A-D\n";
+    outFile << "A=D\n";
+    outFile << "D=M\n";
     outFile << "@R14\n";
     outFile << "M=D\n";
 
@@ -312,6 +314,7 @@ void CodeWriter::WriteReturn() {
 void CodeWriter::PopFrame(const std::string& reg) {
     outFile << "@R13\n";
     outFile << "M=M-1\n";
+    outFile << "A=M\n";
     outFile << "D=M\n";
     outFile << '@' << reg << '\n';
     outFile << "M=D\n";

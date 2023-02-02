@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <stack>
 #include <string>
 
 class CodeWriter {
@@ -29,6 +30,7 @@ class CodeWriter {
     int jumpIndex;
     std::ofstream outFile;
     std::string infileName;
+    std::stack<std::string> currFunction;
 
     const std::string pushCommand = "push";
     const std::string popCommand = "pop";

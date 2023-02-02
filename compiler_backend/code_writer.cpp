@@ -8,7 +8,9 @@
 CodeWriter::CodeWriter(const std::string& outName) :
         jumpIndex(0),
         outFile(outName),
-        infileName("XXX") {
+        infileName("XXX"),
+        currFunction() {
+    currFunction.push("global");
     if (!outFile.is_open()) {
         std::cerr << "ERROR: Could not open output file " << outName << '\n';
         std::exit(EXIT_FAILURE);
@@ -153,14 +155,14 @@ void CodeWriter::PopFixed(const std::string& segment, const int index,
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteLabel(const std::string& label) {
-    outFile << '(' << label << ")\n";
+    outFile << '(' << currFunction.top() << '$' << label << ")\n";
 }
 
 /* -------------------------------------------------------------------------- */
 
 // unconditional jump
 void CodeWriter::WriteGoto(const std::string& label) {
-    outFile << '@' << label << '\n';
+    outFile << '@' << currFunction.top() << '$' << label << '\n';
     outFile << "0;JMP\n";
 }
 
@@ -170,7 +172,7 @@ void CodeWriter::WriteGoto(const std::string& label) {
 void CodeWriter::WriteIf(const std::string& label) {
     PopRegister("D");
 
-    outFile << '@' << label << '\n';
+    outFile << '@' << currFunction.top() << '$' << label << '\n';
     outFile << "D;JNE\n";
 }
 

@@ -22,8 +22,8 @@ CompilationEngine::CompilationEngine(const std::string& infileName,
 void CompilationEngine::CompileClass() {
     const std::string xmlName = "class";
 
-    PrintXMLTag(xmlName, OPENING);
-    currIndent.push_back("\t");
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
 
     // syntax: 'class' className '{' classVarDec* subroutineDec* '}'
 
@@ -32,7 +32,7 @@ void CompilationEngine::CompileClass() {
 
     // 'class'
     if (!(jtok.TokenType() == JackTokenizer::KEYWORD &&
-          jtok.KeywordType == JackTokenizer::CLASS)) {
+          jtok.KeywordType() == JackTokenizer::CLASS)) {
         std::string errMsg =
             "Missing 'class' declaration. All code must be wrapped in classes";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
@@ -69,10 +69,12 @@ void CompilationEngine::CompileClass() {
 
         if (token == "static" || token == "field") {
             CompileClassVarDec();
-        } else if (token == "constructor" || token == "function" || token == "method") {
+        } else if (token == "constructor" || token == "function" ||
+                   token == "method") {
             CompileSubroutine();
         } else {
-            const std::string errMsg = "Unrecognized statement in class declaration";
+            const std::string errMsg =
+                "Unrecognized statement in class declaration";
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
 
@@ -89,27 +91,23 @@ void CompilationEngine::CompileClass() {
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
 
-    currIndent.pop_back("\t");
-    PrintXMLTag(xmlName, CLOSING);
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::PrintToken(const std::string& typeName,
                                    const std::string& token) {
+    outFile << currIndent;
     PrintXMLTag(typeName, OPENING);
-    outFile << jtok.GetToken();
+    outFile << " " << jtok.GetToken() << " ";
     PrintXMLTag(typeName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
-    outFile << currIndent;
-
-    if (type == CLOSING) {
-        outFile << ' ';
-    }
 
     outFile << '<';
 
@@ -121,18 +119,55 @@ void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
 
     if (type == CLOSING) {
         outFile << '\n';
-    } else {
-        outFile << ' ';
     }
 }
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileClassVarDec() {}
+void CompilationEngine::PrintNodeTag(const std::string& tagName, TagType type) {
+
+    if (type == OPENING) {
+        outFile << currIndent;
+    }
+
+    outFile << '<';
+
+    if (type == CLOSING) {
+        outFile << '/';
+    }
+
+    outFile << tagName << '>';
+
+    outFile << '\n';
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileSubroutine() {}
+void CompilationEngine::CompileClassVarDec() {
+    const std::string xmlName = "classVarDec";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // TODO: add content
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileSubroutine() {
+    const std::string xmlName = "subroutineDec";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // TODO: add content
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 

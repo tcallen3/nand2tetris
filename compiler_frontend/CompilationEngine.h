@@ -33,16 +33,16 @@ class CompilationEngine {
     std::map<JackTokenizer::Token, std::string> tokenString = {
         {JackTokenizer::KEYWORD, "keyword"},
         {JackTokenizer::SYMBOL, "symbol"},
-        {JackTokenizer::IDENTFIER, "identifier"},
+        {JackTokenizer::IDENTIFIER, "identifier"},
         {JackTokenizer::INT_CONST, "integerConstant"},
         {JackTokenizer::STRING_CONST, "stringConstant"},
     };
 
     // methods
   private:
-    void CompilationEngine::PrintToken(const std::string& typeName,
-                                       const std::string& token);
+    void PrintToken(const std::string& typeName, const std::string& token);
     void PrintXMLTag(const std::string& tagName, TagType type);
+    void PrintNodeTag(const std::string& tagName, TagType type);
 
     void CompileClassVarDec();
     void CompileSubroutine();

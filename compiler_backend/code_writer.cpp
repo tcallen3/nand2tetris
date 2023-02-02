@@ -4,8 +4,10 @@
 
 /* -------------------------------------------------------------------------- */
 
-CodeWriter::CodeWriter(const std::string& outName)
-        : jumpIndex(0), outFile(outName), infileName("XXX") {
+CodeWriter::CodeWriter(const std::string& outName) :
+        jumpIndex(0),
+        outFile(outName),
+        infileName("XXX") {
     if (!outFile.is_open()) {
         std::cerr << "ERROR: Could not open output file " << outName << '\n';
         std::exit(EXIT_FAILURE);

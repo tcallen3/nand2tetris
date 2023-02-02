@@ -6,8 +6,12 @@ using tokenizer = boost::tokenizer<boost::char_separator<char> >;
 
 /* -------------------------------------------------------------------------- */
 
-Parser::Parser(const std::string& fileName)
-        : inFile(fileName), currLine(), command(), arg1(), arg2() {
+Parser::Parser(const std::string& fileName) :
+        inFile(fileName),
+        currLine(),
+        command(),
+        arg1(),
+        arg2() {
     if (!inFile.is_open()) {
         std::err << "ERROR: Could not open file \"" << fileName << "\"\n";
         std::exti(EXIT_FAILURE);

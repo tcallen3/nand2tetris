@@ -19,6 +19,7 @@ enum class Command {
     EMPTY,
     UNKNOWN
 };
+
 class Parser {
   public:
     Parser(const std::string& fileName);
@@ -41,8 +42,10 @@ class Parser {
     boost::char_separator<char> sep(" \t\r\n");
 
     const std::string commentInitializer = "//";
+
     const std::set<std::string> arithmeticCommands = {
-            "add", "sub", "eq", "gt", "lt", "and", "or", "neg", "not"};
+        "add", "sub", "eq", "gt", "lt", "and", "or", "neg", "not"};
+
     const std::string pushCommand = "push";
     const std::string popCommand = "pop";
 };

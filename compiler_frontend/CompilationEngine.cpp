@@ -692,9 +692,32 @@ void CompilationEngine::CompileTerm() {
         jtok.Advance();
 
     } else if (tokenType == JackTokenizer::IDENTIFIER) {
-        // need lookahead to distinguish var/array/subroutine calls
+        if (jtok.LookaheadToken() == "[") {
+            // array dereference, syntax: varName '[' expression ']'
 
-        // TODO: work out lookahead
+            // varName
+            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+            jtok.Advance();
+
+            // literal '['
+            PrintLiteralSymbol("[", "expression term");
+
+            // expression
+            CompileExpression();
+
+            // literal ']'
+            PrintLiteralSymbol("]", "expression term");
+
+        } else if (jtok.LookaheadToken() == "(") {
+            // subroutine call
+            CompileSubroutineCall();
+
+        } else {
+            // varName
+            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+            jtok.Advance();
+
+        }
 
     } else if (jtok.GetToken() == "(") {
         // '(' expression ')'

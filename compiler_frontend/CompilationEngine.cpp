@@ -657,16 +657,9 @@ void CompilationEngine::CompileExpression() {
     // optional operators and terms
     while (expressionTerminals.find(jtok.GetToken()) ==
            expressionTerminals.end()) {
-        if (jtok.TokenType() == JackTokenizer::SYMBOL) {
+        if (expressionOpTypes.find(jtok.GetToken()) !=
+            expressionOpTypes.end()) {
             // operator
-            if (expressionOpTypes.find(jtok.GetToken()) ==
-                expressionOpTypes.end()) {
-                const std::string errMsg =
-                    "Unrecognized operator in expression";
-                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
-                                            errMsg);
-            }
-
             PrintLiteralSymbol(jtok.GetToken(), "subroutine call");
         } else {
             // term

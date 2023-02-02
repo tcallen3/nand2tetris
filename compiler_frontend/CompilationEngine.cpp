@@ -281,13 +281,7 @@ void CompilationEngine::CompileSubroutineBody() {
     // syntax: '{' varDec* statements '}'
 
     // literal '{'
-    if (jtok.GetToken() != "{") {
-        const std::string errMsg = "Missing opening bracket in subroutine body";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol("{", "subroutine body");
 
     // varDec* statements
     while (jtok.GetToken() != "}") {
@@ -299,13 +293,7 @@ void CompilationEngine::CompileSubroutineBody() {
     }
 
     // literal '}'
-    if (jtok.GetToken() != "}") {
-        const std::string errMsg = "Missing closing bracket in subroutine body";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol("}", "subroutine body");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -329,13 +317,7 @@ void CompilationEngine::CompileVarDec() {
     CompileVarDecCommon(";");
 
     // literal ';'
-    if (jtok.GetToken() != ";") {
-        const std::string errMsg = "Missing semicolon";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol(";", "variable declaration");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -390,13 +372,7 @@ void CompilationEngine::CompileDo() {
     // subroutineCall -> identifier
 
     // literal ';'
-    if (jtok.GetToken() != ";") {
-        const std::string errMsg = "Missing semicolon";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol(";", "subroutine call");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -450,13 +426,7 @@ void CompilationEngine::CompileReturn() {
     }
 
     // literal ';'
-    if (jtok.GetToken() != ";") {
-        const std::string errMsg = "Missing semicolon";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol(";", "return statement");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);

@@ -3,7 +3,6 @@
 
 #include "parser.h"
 
-#include <map>
 #include <set>
 #include <string>
 
@@ -31,11 +30,6 @@ class CodeWriter {
     const std::string popCommand = "pop";
     const std::string constSegment = "constant";
 
-    const std::map<std::string, std::string> registerMap = {{"local","LCL"},
-                                                            {"argument","ARG"},
-                                                            {"this","THIS"},
-                                                            {"that", "THAT"}};
-
     const std::set<std::string> binaryCommands = {"add", "sub", "eq", "gt",
                                                   "lt",  "and", "or"};
 
@@ -47,8 +41,8 @@ class CodeWriter {
     void WriteBinaryOp(const std::string& command);
     void WriteUnaryOp(const std::string& command);
     void WriteOpCommand(const std::string& command);
-    void PushStack(const std::string& reg);
-    void PopStack(const std::string& reg);
+    void PushRegister(const std::string& reg);
+    void PopRegister(const std::string& reg);
     void WriteComparison(const std::string& op);
 };
 

@@ -1,0 +1,15 @@
+D=1
+@2      // A=2
+D=A-D
+@EQLABEL
+D;JGT
+@SP
+A=M
+M=0
+@TERM
+0;JMP
+(EQLABEL)
+@SP
+A=M
+M=-1
+(TERM)

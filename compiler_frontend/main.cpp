@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     if (fs::exists(inputPath)) {
         if (fs::is_regular_file(inputPath) && inputPath.extension() == inExt) {
             outName = inputPath.stem();
-            outName += "T" + outExt;
+            outName += outExt;
 
             CompilationEngine compiler(inputPath.filename(), outName);
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
                 auto path = p.path();
                 if (path.extension() == inExt) {
                     fs::path currFilePath = path.parent_path() / path.stem();
-                    outName = currFilePath.string() + "T" + outExt;
+                    outName = currFilePath.string() + outExt;
 
                     CompilationEngine compiler(path.string(), outName);
 

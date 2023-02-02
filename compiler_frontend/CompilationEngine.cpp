@@ -711,7 +711,8 @@ void CompilationEngine::CompileTerm() {
             // literal ']'
             PrintLiteralSymbol("]", "expression term");
 
-        } else if (jtok.LookaheadToken() == "(") {
+        } else if (jtok.LookaheadToken() == "(" ||
+                   jtok.LookaheadToken() == ".") {
             // subroutine call
             CompileSubroutineCall();
 
@@ -719,7 +720,6 @@ void CompilationEngine::CompileTerm() {
             // varName
             PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
             jtok.Advance();
-
         }
 
     } else if (jtok.GetToken() == "(") {

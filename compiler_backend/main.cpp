@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
             TranslateVMFile(parser, writer);
 
         } else if (fs::is_directory(inputPath)) {
-            // assumes compiler is called on relative path of dir 
+            // assumes compiler is called on relative path of dir
             // i.e. using -> ./parser mydir
             fs::path outPath =
                 inputPath.parent_path() / inputPath.parent_path();
@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
 
 void TranslateVMFile(Parser& parser, CodeWriter& writer) {
     while (parser.Advance()) {
+        if (parser.CommandText() == "") continue;
+
         Command currCommand = parser.CommandType();
         if (currCommand == Command::ARITHMETIC) {
             writer.WriteArithmetic(parser.CommandText());

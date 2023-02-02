@@ -22,11 +22,9 @@ Parser::Parser(const std::string& fileName) :
 /* -------------------------------------------------------------------------- */
 
 bool Parser::Advance() {
-    if (!inFile.good()) {
-        return false;
-    }
-
     std::getline(inFile, currLine);
+
+    if (!inFile.good()) return false;
 
     // !! BEGIN DEBUG !!
     std::cout << "Line read: " << currLine << '\n';

@@ -39,31 +39,21 @@ void CompilationEngine::CompileClass() {
     }
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-
-    // className
     jtok.Advance();
 
+    // className
     if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
         std::string errMsg = "Class name must be a valid identifier";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
 
     // '{' literal
-    jtok.Advance();
-
-    if (!(jtok.TokenType() == JackTokenizer::SYMBOL &&
-          jtok.GetToken() == "{")) {
-        std::string errMsg = "Missing opening bracket in class declaration";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    PrintLiteralSymbol("{", "class declaration");
 
     // check for classVarDec vs. subroutineDec and repeat
-    jtok.Advance();
-
     while (jtok.TokenType() != JackTokenizer::SYMBOL) {
         const std::string token = jtok.GetToken();
 
@@ -137,6 +127,19 @@ void CompilationEngine::PrintNodeTag(const std::string& tagName, TagType type) {
 
 /* -------------------------------------------------------------------------- */
 
+void CompilationEngine::PrintLiteralSymbol(const std::string& symbol,
+                                           const std::string& locationDesc) {
+    if (jtok.GetToken() != symbol) {
+        const std::string errMsg = "Missing " + symbol + " in " + locationDesc;
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+}
+
+/* -------------------------------------------------------------------------- */
+
 void CompilationEngine::CompileClassVarDec() {
     const std::string xmlName = "classVarDec";
 
@@ -168,12 +171,10 @@ void CompilationEngine::CompileClassVarDec() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
-
     // type must be int, char, boolean, or class ID
     if (validTypes.find(jtok.GetToken()) == validTypes.end() &&
         jtok.TokenType() != JackTokenizer::IDENTIFIER) {
-        const std::string errMsg =
-            "Invalid type for variable declaration";
+        const std::string errMsg = "Invalid type for variable declaration";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
@@ -182,8 +183,7 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
 
     // varName
     if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
-        const std::string errMsg =
-            "Invalid name for variable declaration";
+        const std::string errMsg = "Invalid name for variable declaration";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
@@ -235,8 +235,7 @@ void CompilationEngine::CompileSubroutine() {
 
     // subroutineName -> identifier
     if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
-        const std::string errMsg =
-            "Invalid identifier for function name";
+        const std::string errMsg = "Invalid identifier for function name";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
@@ -245,7 +244,8 @@ void CompilationEngine::CompileSubroutine() {
 
     // literal '('
     if (jtok.GetToken() != "(") {
-        const std::string errMsg = "Missing opening paren in subroutine parameter list";
+        const std::string errMsg =
+            "Missing opening paren in subroutine parameter list";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
@@ -259,7 +259,8 @@ void CompilationEngine::CompileSubroutine() {
 
     // literal ')'
     if (jtok.GetToken() != ")") {
-        const std::string errMsg = "Missing closing paren in subroutine parameter list";
+        const std::string errMsg =
+            "Missing closing paren in subroutine parameter list";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
@@ -368,6 +369,67 @@ void CompilationEngine::CompileStatements() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
+    // syntax: statement* where statement is prefixed by one of
+    // 'let', 'if', 'while', 'do', 'return'
+    while (jtok.TokenType() == JackTokenizer::KEYWORD) {
+        const std::string token = jtok.GetToken();
+        if (token == "let") {
+            CompileLet();
+        } else if (token == "if") {
+            CompileIf();
+        } else if (token == "while") {
+            CompileWhile();
+        } else if (token == "do") {
+            CompileDo();
+        } else if (token == "return") {
+            CompileReturn();
+        } else {
+            const std::string errMsg = "Unexpected token in statement";
+            compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+        }
+    }
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileDo() {
+    const std::string xmlName = "doStatement";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: 'do' subroutineCall ';'
+
+    // 'do' -> checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // subroutineCall -> identifier
+
+    // literal ';'
+    if (jtok.GetToken() != ";") {
+        const std::string errMsg = "Missing semicolon";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileLet() {
+    const std::string xmlName = "letStatement";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
     // TODO: add content
 
     currIndent.pop_back();
@@ -376,23 +438,63 @@ void CompilationEngine::CompileStatements() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileDo() {}
+void CompilationEngine::CompileWhile() {
+    const std::string xmlName = "whileStatement";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // TODO: add content
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileLet() {}
+void CompilationEngine::CompileReturn() {
+    const std::string xmlName = "returnStatement";
+
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
+
+    // syntax: 'return' expression? ';'
+
+    // 'return' -> checked by caller
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // check for expression
+    if (jtok.GetToken() != ";") {
+        CompileExpression();
+    }
+
+    // literal ';'
+    if (jtok.GetToken() != ";") {
+        const std::string errMsg = "Missing semicolon";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileWhile() {}
+void CompilationEngine::CompileIf() {
+    const std::string xmlName = "ifStatement";
 
-/* -------------------------------------------------------------------------- */
+    PrintNodeTag(xmlName, OPENING);
+    currIndent.push_back('\t');
 
-void CompilationEngine::CompileReturn() {}
+    // TODO: add content
 
-/* -------------------------------------------------------------------------- */
-
-void CompilationEngine::CompileIf() {}
+    currIndent.pop_back();
+    PrintNodeTag(xmlName, CLOSING);
+}
 
 /* -------------------------------------------------------------------------- */
 

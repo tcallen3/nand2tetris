@@ -6,7 +6,7 @@
 namespace fs = std::filesystem;
 
 const std::string inExt = ".jack";
-const std::string outExt = ".xml";
+const std::string outExt = ".vm";
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {

@@ -4,6 +4,7 @@
 #include "ErrorHandler.h"
 #include "JackTokenizer.h"
 #include "SymbolTable.h"
+#include "VMWriter.h"
 
 #include <fstream>
 #include <set>
@@ -25,10 +26,12 @@ class CompilationEngine {
     // data
   private:
     std::string currInputFile;
+    std::string currClass;
     std::ofstream outFile;
     JackTokenizer jtok;
     ErrorHandler compilerErrorHandler;
     SymbolTable symTable;
+    VMWriter vmWriter;
 
     enum TagType { OPENING, CLOSING };
 
@@ -63,12 +66,23 @@ class CompilationEngine {
     const std::set<std::string> keywordConstants = {"true", "false", "null",
                                                     "this"};
 
+    const std::map<std::string, VMWriter::Command> binaryOpCommands = {
+        {"+", VMWriter::ADD}, {"-", VMWriter::SUB}, {"*", VMWriter::MULT},
+        {"/", VMWriter::DIV}, {"&", VMWriter::AND}, {"|", VMWriter::OR},
+        {"<", VMWriter::LT},  {">", VMWriter::GT},  {"=", VMWriter::EQ},
+    };
+
+    const std::map<std::string, VMWriter::Command> unaryOpCommands = {
+        {"-", VMWriter::NEG}, {"~", VMWriter::NOT}};
+
     // methods
   private:
     void PrintToken(const std::string& typeName, const std::string& token);
     void PrintXMLTag(const std::string& tagName, TagType type);
     void PrintNodeTag(const std::string& tagName, TagType type);
     void PrintLiteralSymbol(const std::string& symbol,
+                            const std::string& locationDesc);
+    void CheckLiteralSymbol(const std::string& symbol,
                             const std::string& locationDesc);
     void PrintIdentifier(const Category category, const Status status);
 
@@ -77,7 +91,7 @@ class CompilationEngine {
                              const Category category);
     void CompileSubroutine();
     void CompileParameterList();
-    void CompileSubroutineBody();
+    void CompileSubroutineBody(const std::string& funcName);
 
     void CompileVarDec();
 
@@ -91,7 +105,7 @@ class CompilationEngine {
     void CompileSubroutineCall();
     void CompileExpression();
     void CompileTerm();
-    void CompileExpressionList();
+    int CompileExpressionList();
 };
 
 #endif /* COMPILATION_ENGINE_H */

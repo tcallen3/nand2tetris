@@ -7,7 +7,7 @@
 
 class VMWriter {
   public:
-    VMWriter(const std::string& outName);
+    VMWriter(std::ofstream& out);
 
     // remove unwanted constructors
     VMWriter(const VMWriter& that) = delete;
@@ -51,7 +51,7 @@ class VMWriter {
 
     // data
   private:
-    std::ofstream outFile;
+    std::ofstream& outFile;
 };
 
 #endif /* VM_WRITER_H */

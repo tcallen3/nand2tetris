@@ -8,9 +8,12 @@
 CompilationEngine::CompilationEngine(const std::string& infileName,
                                      const std::string& outfileName) :
         currInputFile(infileName),
+        currClass(),
         outFile(outfileName),
         jtok(infileName),
-        compilerErrorHandler() {
+        compilerErrorHandler(),
+        symTable(),
+        vmWriter(outFile) {
     if (!outFile.is_open()) {
         std::cerr << "ERROR: Could not open file \"" << outfileName << "\"\n";
         std::exit(EXIT_FAILURE);
@@ -20,10 +23,10 @@ CompilationEngine::CompilationEngine(const std::string& infileName,
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileClass() {
-    const std::string xmlName = "class";
+    // const std::string xmlName = "class";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: 'class' className '{' classVarDec* subroutineDec* '}'
 
@@ -34,11 +37,11 @@ void CompilationEngine::CompileClass() {
     if (!(jtok.TokenType() == JackTokenizer::KEYWORD &&
           jtok.KeywordType() == JackTokenizer::CLASS)) {
         std::string errMsg =
-            "Missing 'class' declaration. All code must be wrapped in classes";
+            "Missing 'class' declaration. All code must be wrapped in classes.";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // className
@@ -47,11 +50,14 @@ void CompilationEngine::CompileClass() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintIdentifier(CLASS, DEFINED);
+    // class name must prefix all function declarations
+    currClass = jtok.GetToken();
+
+    // PrintIdentifier(CLASS, DEFINED);
     jtok.Advance();
 
     // '{' literal
-    PrintLiteralSymbol("{", "class declaration");
+    CheckLiteralSymbol("{", "class declaration");
 
     // check for classVarDec vs. subroutineDec and repeat
     while (jtok.TokenType() != JackTokenizer::SYMBOL) {
@@ -71,10 +77,10 @@ void CompilationEngine::CompileClass() {
 
     // '}' literal
     // no advancing since previous loop caught us up to here
-    PrintLiteralSymbol("}", "class declaration");
+    CheckLiteralSymbol("}", "class declaration");
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -129,6 +135,18 @@ void CompilationEngine::PrintNodeTag(const std::string& tagName, TagType type) {
     outFile << tagName << '>';
 
     outFile << '\n';
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CheckLiteralSymbol(const std::string& symbol,
+                                           const std::string& locationDesc) {
+    if (jtok.GetToken() != symbol) {
+        const std::string errMsg = "Missing " + symbol + " in " + locationDesc;
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    jtok.Advance();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -247,7 +265,7 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
 
     data.type = jtok.GetToken();
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // varName
@@ -260,7 +278,7 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
     symTable.Define(jtok.GetToken(), data.type, data.kind);
 
     // print
-    PrintIdentifier(category, DEFINED);
+    // PrintIdentifier(category, DEFINED);
     jtok.Advance();
 
     // optional comma-separated identifiers
@@ -274,9 +292,10 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
         }
 
         if (jtok.TokenType() == JackTokenizer::IDENTIFIER) {
-            PrintIdentifier(category, DEFINED);
+            symTable.Define(jtok.GetToken(), data.type, data.kind);
+            // PrintIdentifier(category, DEFINED);
         } else {
-            PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+            // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         }
 
         jtok.Advance();
@@ -286,10 +305,10 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileSubroutine() {
-    const std::string xmlName = "subroutineDec";
+    // const std::string xmlName = "subroutineDec";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: ('constructor' | 'function' | 'method') ('void' | type)
     //         subroutineName '(' parameterList ')' subroutineBody
@@ -298,7 +317,8 @@ void CompilationEngine::CompileSubroutine() {
     symTable.StartSubroutine();
 
     // print function type (already checked in caller)
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // ('void' | type)
@@ -312,7 +332,8 @@ void CompilationEngine::CompileSubroutine() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    bool isVoid = (jtok.GetToken() == "void");
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // subroutineName -> identifier
@@ -321,74 +342,88 @@ void CompilationEngine::CompileSubroutine() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintIdentifier(SUBROUTINE, DEFINED);
+    const auto funcName = jtok.GetToken();
+    // PrintIdentifier(SUBROUTINE, DEFINED);
     jtok.Advance();
 
     // literal '('
-    PrintLiteralSymbol("(", "subroutine parameter list");
+    CheckLiteralSymbol("(", "subroutine parameter list");
 
     // optional parameterList -> variable declaration
     if (jtok.GetToken() != ")") {
         CompileParameterList();
     } else {
         // add parameterList tags at same indent to match POR
-        PrintNodeTag("parameterList", OPENING);
-        PrintNodeTag("parameterList", CLOSING);
+        // PrintNodeTag("parameterList", OPENING);
+        // PrintNodeTag("parameterList", CLOSING);
     }
 
     // literal ')'
-    PrintLiteralSymbol(")", "subroutine parameter list");
+    CheckLiteralSymbol(")", "subroutine parameter list");
 
     // subroutineBody
-    CompileSubroutineBody();
+    CompileSubroutineBody(funcName);
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    if (isVoid) {
+        vmWriter.WritePush(VMWriter::CONST, 0);
+    }
+
+    vmWriter.WriteReturn();
+
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileParameterList() {
-    const std::string xmlName = "parameterList";
+    // const std::string xmlName = "parameterList";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: ((type varName) (',' type varName)*)?
     // note that this is the same (apart from parens) as standard var dec
     CompileVarDecCommon(")", ARGUMENT);
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileSubroutineBody() {
-    const std::string xmlName = "subroutineBody";
+void CompilationEngine::CompileSubroutineBody(const std::string& funcName) {
+    // const std::string xmlName = "subroutineBody";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: '{' varDec* statements '}'
 
     // literal '{'
-    PrintLiteralSymbol("{", "subroutine body");
+    CheckLiteralSymbol("{", "subroutine body");
 
-    // varDec* statements
+    // varDec*
+    // Note: enforcing variable-first ordering is key for our current
+    //       compilation model
+    while (jtok.GetToken() == "var") {
+        CompileVarDec();
+    }
+
+    auto nLocal = symTable.VarCount(SymbolTable::VAR);
+    auto vmName = currClass + "." + funcName;
+    vmWriter.WriteFunction(vmName, nLocal);
+
+    // statements
     while (jtok.GetToken() != "}") {
-        if (jtok.GetToken() == "var") {
-            CompileVarDec();
-        } else {
-            CompileStatements();
-        }
+        CompileStatements();
     }
 
     // literal '}'
-    PrintLiteralSymbol("}", "subroutine body");
+    CheckLiteralSymbol("}", "subroutine body");
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -418,10 +453,10 @@ void CompilationEngine::CompileVarDec() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileStatements() {
-    const std::string xmlName = "statements";
+    // const std::string xmlName = "statements";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: statement* where statement is prefixed by one of
     // 'let', 'if', 'while', 'do', 'return'
@@ -437,28 +472,29 @@ void CompilationEngine::CompileStatements() {
             CompileDo();
         } else if (token == "return") {
             CompileReturn();
+            break;
         } else {
             const std::string errMsg = "Unexpected token in statement";
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
     }
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileDo() {
-    const std::string xmlName = "doStatement";
+    // const std::string xmlName = "doStatement";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: 'do' subroutineCall ';'
 
     // 'do' -> checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // subroutineCall -> identifier
@@ -470,10 +506,13 @@ void CompilationEngine::CompileDo() {
     CompileSubroutineCall();
 
     // literal ';'
-    PrintLiteralSymbol(";", "subroutine call");
+    CheckLiteralSymbol(";", "subroutine call");
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // function is assumed void, so pop its value and ignore
+    vmWriter.WritePop(VMWriter::TEMP, 0);
+
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -577,15 +616,15 @@ void CompilationEngine::CompileWhile() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileReturn() {
-    const std::string xmlName = "returnStatement";
+    // const std::string xmlName = "returnStatement";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: 'return' expression? ';'
 
     // 'return' -> checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    // PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // check for expression
@@ -594,10 +633,10 @@ void CompilationEngine::CompileReturn() {
     }
 
     // literal ';'
-    PrintLiteralSymbol(";", "return statement");
+    CheckLiteralSymbol(";", "return statement");
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -660,20 +699,26 @@ void CompilationEngine::CompileSubroutineCall() {
     //         (className | varName) '.' subroutineName '(' expressionList ')'
 
     // subroutineName | (className | varName) -> identifier checked by caller
+    std::string className = currClass;
+    std::string funcName = "dummy";
     if (jtok.LookaheadToken() == "(") {
         // regular subroutine
-        PrintIdentifier(SUBROUTINE, USED);
+        // PrintIdentifier(SUBROUTINE, USED);
+        funcName = jtok.GetToken();
     } else {
         // class or variable (class won't be in lookup table)
         const std::string varName = jtok.GetToken();
         if (symTable.Check(varName)) {
-            SymbolTable::VARKIND kind = symTable.KindOf(varName);
-            Category category = kindMap.at(kind);
+            // SymbolTable::VARKIND kind = symTable.KindOf(varName);
+            // Category category = kindMap.at(kind);
 
-            PrintIdentifier(category, USED);
+            // PrintIdentifier(category, USED);
+
+            className = symTable.TypeOf(jtok.GetToken());
 
         } else {
-            PrintIdentifier(CLASS, USED);
+            // PrintIdentifier(CLASS, USED);
+            className = jtok.GetToken();
         }
     }
 
@@ -681,23 +726,27 @@ void CompilationEngine::CompileSubroutineCall() {
 
     if (jtok.GetToken() == "(") {
         // literal '('
-        PrintLiteralSymbol("(", "subroutine call");
+        CheckLiteralSymbol("(", "subroutine call");
 
+        int expressionCount = 0;
         // expressionList
         if (jtok.GetToken() != ")") {
-            CompileExpressionList();
+            expressionCount = CompileExpressionList();
         } else {
             // add empty expression list tags at same indent to match POR
-            PrintNodeTag("expressionList", OPENING);
-            PrintNodeTag("expressionList", CLOSING);
+            // PrintNodeTag("expressionList", OPENING);
+            // PrintNodeTag("expressionList", CLOSING);
         }
 
         // literal ')'
-        PrintLiteralSymbol(")", "subroutine call");
+        CheckLiteralSymbol(")", "subroutine call");
+
+        const auto fname = className + "." + funcName;
+        vmWriter.WriteCall(fname, expressionCount);
 
     } else if (jtok.GetToken() == ".") {
         // literal '.'
-        PrintLiteralSymbol(".", "subroutine call");
+        CheckLiteralSymbol(".", "subroutine call");
 
         // subroutineName -> identifier
         if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
@@ -705,23 +754,28 @@ void CompilationEngine::CompileSubroutineCall() {
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
 
-        PrintIdentifier(SUBROUTINE, USED);
+        funcName = jtok.GetToken();
+        // PrintIdentifier(SUBROUTINE, USED);
         jtok.Advance();
 
         // literal '('
-        PrintLiteralSymbol("(", "subroutine call");
+        CheckLiteralSymbol("(", "subroutine call");
 
+        int expressionCount = 0;
         // expressionList
         if (jtok.GetToken() != ")") {
-            CompileExpressionList();
+            expressionCount = CompileExpressionList();
         } else {
             // add empty expression list tags at same indent to match POR
-            PrintNodeTag("expressionList", OPENING);
-            PrintNodeTag("expressionList", CLOSING);
+            // PrintNodeTag("expressionList", OPENING);
+            // PrintNodeTag("expressionList", CLOSING);
         }
 
         // literal ')'
-        PrintLiteralSymbol(")", "subroutine call");
+        CheckLiteralSymbol(")", "subroutine call");
+
+        const auto fname = className + "." + funcName;
+        vmWriter.WriteCall(fname, expressionCount);
 
     } else {
         const std::string errMsg = "Unexpected symbol in subroutine call";
@@ -732,10 +786,10 @@ void CompilationEngine::CompileSubroutineCall() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileExpression() {
-    const std::string xmlName = "expression";
+    // const std::string xmlName = "expression";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: term (op term)*
 
@@ -757,38 +811,55 @@ void CompilationEngine::CompileExpression() {
     }
 
     // optional operators and terms
+    std::string currOp = "";
     while (expressionTerminals.find(jtok.GetToken()) ==
            expressionTerminals.end()) {
         if (expressionOpTypes.find(jtok.GetToken()) !=
             expressionOpTypes.end()) {
             // operator
-            PrintLiteralSymbol(jtok.GetToken(), "subroutine call");
+            // PrintLiteralSymbol(jtok.GetToken(), "expression");
+            currOp = jtok.GetToken();
+            jtok.Advance();
         } else {
             // term
             CompileTerm();
+
+            if (binaryOpCommands.find(currOp) != binaryOpCommands.end()) {
+                vmWriter.WriteArithmetic(binaryOpCommands.at(currOp));
+
+            } else {
+                const std::string errMsg =
+                    "Unrecognized operator \"" + currOp + "\" in expression";
+                compilerErrorHandler.Report(currInputFile, jtok.LineNum(),
+                                            errMsg);
+            }
         }
     }
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileTerm() {
-    const std::string xmlName = "term";
+    // const std::string xmlName = "term";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: integerConstant | stringConstant | keywordConstant |
     //         varName | varName '[' expression ']' | subroutineCall |
     //         '(' expression ')' | unaryOp term
 
     auto tokenType = jtok.TokenType();
-    if (tokenType == JackTokenizer::INT_CONST ||
-        tokenType == JackTokenizer::STRING_CONST) {
-        // integerConstant | stringConstant
+    if (tokenType == JackTokenizer::INT_CONST) {
+        // integerConstant
+        vmWriter.WritePush(VMWriter::CONST, std::stoi(jtok.GetToken()));
+        jtok.Advance();
+
+    } else if (tokenType == JackTokenizer::STRING_CONST) {
+        // stringConstant
         PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
 
@@ -858,20 +929,24 @@ void CompilationEngine::CompileTerm() {
         // '(' expression ')'
 
         // literal '('
-        PrintLiteralSymbol("(", "expression term");
+        CheckLiteralSymbol("(", "expression term");
 
         // expression
         CompileExpression();
 
         // literal ')'
-        PrintLiteralSymbol(")", "expression term");
+        CheckLiteralSymbol(")", "expression term");
 
     } else if (unaryOpTypes.find(jtok.GetToken()) != unaryOpTypes.end()) {
         // unaryOp
-        PrintLiteralSymbol(jtok.GetToken(), "expression term");
+        // PrintLiteralSymbol(jtok.GetToken(), "expression term");
+
+        const auto currOp = jtok.GetToken();
 
         // term
         CompileTerm();
+
+        vmWriter.WriteArithmetic(unaryOpCommands.at(currOp));
 
     } else {
         // unrecognized input
@@ -879,17 +954,17 @@ void CompilationEngine::CompileTerm() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileExpressionList() {
-    const std::string xmlName = "expressionList";
+int CompilationEngine::CompileExpressionList() {
+    // const std::string xmlName = "expressionList";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    // PrintNodeTag(xmlName, OPENING);
+    // currIndent.push_back('\t');
 
     // syntax: (expression(',' expression)*)?
 
@@ -898,20 +973,24 @@ void CompilationEngine::CompileExpressionList() {
     //       Additionally, the only terminal in the language rules here is
     //       a literal ')'.
 
+    int expressionCount = 1;
     // expression
     CompileExpression();
 
     // optional comma-separated expressions
     while (jtok.GetToken() != ")") {
         if (jtok.GetToken() == ",") {
-            PrintLiteralSymbol(",", "expression list");
+            CheckLiteralSymbol(",", "expression list");
         } else {
+            ++expressionCount;
             CompileExpression();
         }
     }
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // currIndent.pop_back();
+    // PrintNodeTag(xmlName, CLOSING);
+
+    return expressionCount;
 }
 
 /* -------------------------------------------------------------------------- */

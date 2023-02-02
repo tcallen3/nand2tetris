@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
             writer.SetFileName(inputPath.stem());
             Parser parser(inputPath.filename());
 
-            writer.WriteInit();
+            //writer.WriteInit();
 
             TranslateVMFile(parser, writer);
 
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
             CodeWriter writer(outName);
 
-            writer.WriteInit();
+            //writer.WriteInit();
 
             for (auto& p : fs::directory_iterator(inputPath)) {
                 Parser parser(p.path());

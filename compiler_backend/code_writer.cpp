@@ -193,8 +193,55 @@ void CodeWriter::WriteIf(const std::string& label) {
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteCall(const std::string& functionName, int nArgs) {
+    const std::string retBase = "Ret." + functionName + std::to_string(returnIndex);
+    const std::string fullLabel = currFunction.top() + "$" + retBase;
 
-    // TODO
+    ++returnIndex;
+
+    // push return-address
+    outFile << '@' << fullLabel << '\n';
+    PushRegister("A");
+
+    // push LCL
+    outFile << "@LCL\n";
+    outFile << "D=M\n";
+    PushRegister("D");
+
+    // push ARG
+    outFile << "@ARG\n";
+    outFile << "D=M\n";
+    PushRegister("D");
+
+    // push THIS
+    outFile << "@THIS\n";
+    outFile << "D=M\n";
+    PushRegister("D");
+
+    // push THAT
+    outFile << "@THAT\n";
+    outFile << "D=M\n";
+    PushRegister("D");
+
+    // ARG = SP-n-5
+    int backShift = nArgs + savedStackSize;
+    outFile << '@' << backShift << '\n';
+    outFile << "D=A\n";
+    outFile << "@SP\n";
+    outFile << "D=M-D\n";
+    outFile << "@ARG\n";
+    outFile << "M=D\n";
+
+    // LCL = SP
+    outFile << "@SP\n";
+    outFile << "D=M\n";
+    outFile << "@LCL\n";
+    outFile << "M=D\n";
+
+    // goto f
+    WriteGoto(functionName);
+
+    // label return-address
+    WriteLabel(retBase);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -213,9 +260,61 @@ void CodeWriter::WriteFunction(const std::string& functionName, int nLocals) {
 
 void CodeWriter::WriteReturn() {
 
-    // TODO
+    // FRAME (R13) = LCL
+    outFile << "@LCL\n";
+    outFile << "D=M\n";
+    outFile << "@R13\n";
+    outFile << "M=D\n";
+
+    // RET (R14) = *(FRAME - 5)
+    outFile << '@' << savedStackSize << '\n';
+    outFile << "D=A\n";
+    outFile << "@R13\n";
+    outFile << "A=M\n";
+    outFile << "D=A-D\n";
+    outFile << "@R14\n";
+    outFile << "M=D\n";
+
+    // *ARG = pop() -> put return value on stack
+    PopRegister("D");
+    outFile << "@ARG\n";
+    outFile << "A=M\n";
+    outFile << "M=D\n";
+
+    // SP = ARG + 1
+    outFile << "@ARG\n";
+    outFile << "D=M+1\n";
+    outFile << "@SP\n";
+    outFile << "M=D\n";
+
+    // THAT = *(FRAME - 1)
+    PopFrame("THAT");
+
+    // THIS = *(FRAME - 2)
+    PopFrame("THIS");
+
+    // ARG = *(FRAME - 3)
+    PopFrame("ARG");
+
+    // LCL = *(FRAME - 4)
+    PopFrame("LCL");
+
+    // goto RET (R14)
+    outFile << "@R14\n";
+    outFile << "A=M\n";
+    outFile << "0;JMP\n";
 
     currFunction.pop();
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::PopFrame(const std::string& reg) {
+    outFile << "@R13\n";
+    outFile << "M=M-1\n";
+    outFile << "D=M\n";
+    outFile << '@' << reg << '\n';
+    outFile << "M=D\n";
 }
 
 /* -------------------------------------------------------------------------- */
@@ -278,7 +377,10 @@ void CodeWriter::WriteOpCommand(const std::string& command) {
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::PushRegister(const std::string& reg) {
-    outFile << "D=" << reg << '\n';  // save register value
+    if (reg != "D") {
+        outFile << "D=" << reg << '\n';  // save register value
+    }
+
     outFile << "@SP\n";              // look up stack pointer
     outFile << "A=M\n";              // A = pointer val
     outFile << "M=D\n";              // M[val] = reg

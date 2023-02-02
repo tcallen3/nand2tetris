@@ -50,6 +50,8 @@ class CodeWriter {
     const int pointerBase = 3;
     const int pointerMaxOffset = 1;
 
+    const int savedStackSize = 5;
+
     const std::set<std::string> binaryCommands = {"add", "sub", "eq", "gt",
                                                   "lt",  "and", "or"};
 
@@ -67,6 +69,7 @@ class CodeWriter {
     void WritePop(const std::string& segment, const int index);
     void PopFixed(const std::string& segment, const int index, const int base,
                   const int maxOffset);
+    void PopFrame(const std::string& reg);
     void WriteBinaryOp(const std::string& command);
     void WriteUnaryOp(const std::string& command);
     void WriteOpCommand(const std::string& command);

@@ -6,13 +6,8 @@ using tokenizer = boost::tokenizer<boost::char_separator<char> >;
 
 /* -------------------------------------------------------------------------- */
 
-Parser::Parser(const std::string & fileName) :
-    inFile(fileName),
-    currLine(),
-    command(),
-    arg1(),
-    arg2()
-{
+Parser::Parser(const std::string& fileName)
+        : inFile(fileName), currLine(), command(), arg1(), arg2() {
     if (!inFile.is_open()) {
         std::err << "ERROR: Could not open file \"" << fileName << "\"\n";
         std::exti(EXIT_FAILURE);
@@ -22,7 +17,6 @@ Parser::Parser(const std::string & fileName) :
 /* -------------------------------------------------------------------------- */
 
 bool Parser::Advance() {
-
     if (!inFile.good()) {
         return false;
     }
@@ -36,11 +30,9 @@ bool Parser::Advance() {
     auto tokIter = tok.begin();
 
     if (tok.begin() == tok.end()) {
-
         command = "";
 
     } else {
-
         command = *tokIter;
         ++tokIter;
 
@@ -53,7 +45,6 @@ bool Parser::Advance() {
             arg2 = *tokIter;
             ++tokIter;
         }
-
     }
 
     return true;
@@ -62,25 +53,19 @@ bool Parser::Advance() {
 /* -------------------------------------------------------------------------- */
 
 Command Parser::CommandType() {
-
     if (arithmeticCommands.find(command) != arithmeticCommands.end()) {
-
         return Command::ARITHMETIC;
 
     } else if (command == pushCommand) {
-
         return Command::PUSH;
 
     } else if (command == popCommand) {
-
         return Command::POP;
 
     } else if (command.empty()) {
-
         return Command::EMPTY;
 
     } else {
-
         std::cerr << "WARNING: Unrecognized VM command \"" << command << "\"\n";
     }
 
@@ -89,26 +74,14 @@ Command Parser::CommandType() {
 
 /* -------------------------------------------------------------------------- */
 
-std::string Parser::CommandText() {
-
-    return command;
-
-}
+std::string Parser::CommandText() { return command; }
 
 /* -------------------------------------------------------------------------- */
 
-std::string Parser::FirstArg() {
-
-    return arg1;
-
-}
+std::string Parser::FirstArg() { return arg1; }
 
 /* -------------------------------------------------------------------------- */
 
-std::string Parser::SecondArg() {
-
-    return arg2;
-
-}
+std::string Parser::SecondArg() { return arg2; }
 
 /* -------------------------------------------------------------------------- */

@@ -170,29 +170,29 @@ void Assembler::translateCommands() {
 
         // interpret command
 
-        size_t iNonBlank = line.find_first_of(initialCommandChars);
+        //size_t iNonBlank = line.find_first_of(initialCommandChars);
 
     // !! BEGIN DEBUG !!
-    std::cout << "iNonBlank is: " << iNonBlank << '\n';
+    //std::cout << "iNonBlank is: " << iNonBlank << '\n';
     // !! END DEBUG !!
 
         std::string currInstruction;
 
-        if (line[iNonBlank] == '@') {
+        if (line[0] == '@') {
 
     // !! BEGIN DEBUG !!
     std::cout << "Register load command found\n";
     // !! END DEBUG !!
 
             std::string binAddress;
-            std::string memValString = line.substr(iNonBlank + 1);
+            std::string memValString = line.substr(1);
 
     // !! BEGIN DEBUG !!
     std::cout << "Memory address is: " << memValString << '\n';
     // !! END DEBUG !!
 
             // check if we have symbol or numeric literal
-            if (std::isdigit(line[iNonBlank + 1])) {
+            if (std::isdigit(line[1])) {
 
                 binAddress = binaryRep(std::stoi(memValString));
 
@@ -219,23 +219,18 @@ void Assembler::translateCommands() {
             currInstruction = loadPrefix + binAddress;
             instructionStream << currInstruction << '\n';
 
-        } else if (line[iNonBlank] == 'A' || line[iNonBlank] == 'M' ||
-                line[iNonBlank] == 'D') {
+        } else {
 
     // !! BEGIN DEBUG !!
     std::cout << "ALU command found: " << line << '\n';
     // !! END DEBUG !!
 
             // ALU command invocation
-            line = line.substr(iNonBlank);
+            //line = line.substr(iNonBlank);
             currInstruction = compPrefix + binaryCompCode(line) +
                 binaryDestCode(line) + binaryJumpCode(line);
 
             instructionStream << currInstruction << '\n';
-
-        } else {
-
-            std::cerr << "WARNING: Unrecognized line format \"" << line << "\"\n";
 
         }
     }
@@ -270,12 +265,17 @@ std::string Assembler::binaryCompCode(const std::string & command) const {
 
     auto equalPos = command.find("=");
 
+/*
     if (equalPos == std::string::npos) {
         std::cerr << "ERROR: Malformed command instruction \"" << command << "\"\n";
         exit(EXIT_FAILURE);
     }
+*/
+    std::string fullCmd = command;
 
-    std::string fullCmd = command.substr(equalPos + 1);
+    if (equalPos != std::string::npos) {
+        fullCmd = command.substr(equalPos + 1);
+    }
 
     // !! BEGIN DEBUG !!
     std::cout << "In binaryCompCode(), fullCmd is: " << fullCmd << '\n';
@@ -323,12 +323,18 @@ std::string Assembler::binaryDestCode(const std::string & command) const {
     std::cout << "In binaryDestCode(), equalPos is: " << equalPos << '\n';
     // !! END DEBUG !!
 
+/*
     if (equalPos == std::string::npos) {
         std::cerr << "ERROR: Malformed command instruction \"" << command << "\"\n";
         exit(EXIT_FAILURE);
     }
+*/
+    // empty if there's no equal sign
+    std::string destPart = "";
 
-    std::string destPart = command.substr(0, equalPos);
+    if (equalPos != std::string::npos) {
+        destPart = command.substr(0, equalPos);
+    }
 
     // !! BEGIN DEBUG !!
     std::cout << "In binaryDestCode(), destPart is: " << destPart << '\n';
@@ -342,6 +348,10 @@ std::string Assembler::binaryDestCode(const std::string & command) const {
 
     if (destPart.find('M') != std::string::npos)
         destM = "1";
+
+    // !! BEGIN DEBUG !!
+    std::cout << "In binaryDestCode(), returning: " << destA + destD + destM << '\n';
+    // !! END DEBUG !!
 
     return destA + destD + destM;
 }

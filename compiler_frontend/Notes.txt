@@ -2,3 +2,7 @@ It turns out that some types of invalid syntax (e.g. "naked" let/do/while/etc.
 statements in class scope) can lead to infinite loops in the compiler. This
 should probably be addressed, but requires more sophistication than is strictly
 required by the book's spec.
+
+There is some kind of issue with a certain set of comments in one of the test
+examples (the Ch. 11 "Seven" folder, in Main.jack) - this needs to be fixed,
+but for now just want to get moving forward.

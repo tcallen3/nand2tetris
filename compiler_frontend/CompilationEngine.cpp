@@ -199,7 +199,8 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
     // optional comma-separated identifiers
     while (jtok.GetToken() != terminal) {
         if (!(jtok.TokenType() == JackTokenizer::SYMBOL ||
-              jtok.TokenType() == JackTokenizer::IDENTIFIER)) {
+              jtok.TokenType() == JackTokenizer::IDENTIFIER ||
+              jtok.TokenType() == JackTokenizer::KEYWORD)) {
             const std::string errMsg =
                 "Unexpected token in variable declaration";
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);

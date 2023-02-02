@@ -728,19 +728,22 @@ void CompilationEngine::CompileSubroutineCall() {
         CheckLiteralSymbol("(", "subroutine call");
 
         int expressionCount = 0;
+
+        // naked subroutine calls are method calls by definition, so push "this"
+        vmWriter.WritePush(VMWriter::POINTER, 0);
+
         // expressionList
         if (jtok.GetToken() != ")") {
             expressionCount = CompileExpressionList();
         }
 
+        // factor in "this" pointer
+        ++expressionCount;
+
         // literal ')'
         CheckLiteralSymbol(")", "subroutine call");
 
         const auto fname = className + "." + funcName;
-
-        // naked subroutine calls are method calls by definition, so push "this"
-        vmWriter.WritePush(VMWriter::POINTER, 0);
-        ++expressionCount;
 
         vmWriter.WriteCall(fname, expressionCount);
 

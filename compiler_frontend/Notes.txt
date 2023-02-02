@@ -2,3 +2,5 @@ It turns out that some types of invalid syntax (e.g. "naked" let/do/while/etc.
 statements in class scope) can lead to infinite loops in the compiler. This
 should probably be addressed, but requires more sophistication than is strictly
 required by the book's spec.
+
+May not handle trailing spaces correctly in some instances.

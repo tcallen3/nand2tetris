@@ -2,3 +2,6 @@
 *.hack
 *.asm
 *.vm
+build
+bin
+test_dir

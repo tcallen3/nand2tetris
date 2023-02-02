@@ -10,8 +10,7 @@ CodeWriter::CodeWriter(const std::string& outName) :
         returnIndex(0),
         outFile(outName),
         infileName("XXX"),
-        currFunction() {
-    currFunction.push("global");
+        currFunction("global") {
     if (!outFile.is_open()) {
         std::cerr << "ERROR: Could not open output file " << outName << '\n';
         std::exit(EXIT_FAILURE);
@@ -173,7 +172,7 @@ void CodeWriter::WriteLabel(const std::string& label, const bool isFunction) {
         outFile << '(' << label << ")\n";
 
     } else {
-        outFile << '(' << currFunction.top() << '$' << label << ")\n";
+        outFile << '(' << currFunction << '$' << label << ")\n";
 
     }
 }
@@ -186,7 +185,7 @@ void CodeWriter::WriteGoto(const std::string& label, const bool isFunction) {
         outFile << '@' << label << '\n';
 
     } else {
-        outFile << '@' << currFunction.top() << '$' << label << '\n';
+        outFile << '@' << currFunction << '$' << label << '\n';
 
     }
 
@@ -199,7 +198,7 @@ void CodeWriter::WriteGoto(const std::string& label, const bool isFunction) {
 void CodeWriter::WriteIf(const std::string& label) {
     PopRegister("D");
 
-    outFile << '@' << currFunction.top() << '$' << label << '\n';
+    outFile << '@' << currFunction << '$' << label << '\n';
     outFile << "D;JNE\n";
 }
 
@@ -265,7 +264,7 @@ void CodeWriter::WriteFunction(const std::string& functionName, int nLocals) {
         WritePush(constSegment, 0);
     }
 
-    currFunction.push(functionName);
+    currFunction = functionName;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -317,8 +316,6 @@ void CodeWriter::WriteReturn() {
     outFile << "@R14\n";
     outFile << "A=M\n";
     outFile << "0;JMP\n";
-
-    currFunction.pop();
 }
 
 /* -------------------------------------------------------------------------- */

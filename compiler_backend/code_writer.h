@@ -35,7 +35,7 @@ class CodeWriter {
     int returnIndex;
     std::ofstream outFile;
     std::string infileName;
-    std::stack<std::string> currFunction;
+    std::string currFunction;
 
     const std::string pushCommand = "push";
     const std::string popCommand = "pop";

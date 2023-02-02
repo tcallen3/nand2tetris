@@ -105,6 +105,20 @@ void JackTokenizer::AdvanceDriver() {
 
 /* -------------------------------------------------------------------------- */
 
+std::string JackTokenizer::LookaheadToken() const {
+    auto localColNum = currColumnNum;
+
+    while (std::isspace(currLine[localColNum])) {
+        ++localColNum;
+    }
+
+    std::stringstream ss;
+    ss << currLine[localColNum];
+    return ss.str();
+}
+
+/* -------------------------------------------------------------------------- */
+
 void JackTokenizer::ReadNextLine() {
     std::getline(inFile, currLine);
     ++currLineNum;

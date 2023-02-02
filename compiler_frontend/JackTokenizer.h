@@ -58,7 +58,8 @@ class JackTokenizer {
     bool HasMoreTokens() const { return moreTokens; }
     void Advance();
     Token TokenType() const { return currTokenType; }
-    std::string GetToken() const { return currToken; }  // temporary?
+    std::string GetToken() const { return currToken; }
+    std::string LookaheadToken() const;
     Keyword KeywordType() const { return currKeyword; }
     char Symbol() const { return currSymbol; }
     std::string Identifier() const { return currIdentifier; }

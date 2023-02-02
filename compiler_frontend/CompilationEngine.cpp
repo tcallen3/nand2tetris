@@ -71,13 +71,7 @@ void CompilationEngine::CompileClass() {
 
     // '}' literal
     // no advancing since previous loop caught us up to here
-    if (!(jtok.TokenType() == JackTokenizer::SYMBOL &&
-          jtok.GetToken() == "}")) {
-        std::string errMsg = "Missing closing bracket in class declaration";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    PrintLiteralSymbol("}", "class declaration");
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
@@ -243,14 +237,7 @@ void CompilationEngine::CompileSubroutine() {
     jtok.Advance();
 
     // literal '('
-    if (jtok.GetToken() != "(") {
-        const std::string errMsg =
-            "Missing opening paren in subroutine parameter list";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol("(", "subroutine parameter list");
 
     // optional parameterList -> variable declaration
     if (jtok.GetToken() != ")") {
@@ -258,14 +245,7 @@ void CompilationEngine::CompileSubroutine() {
     }
 
     // literal ')'
-    if (jtok.GetToken() != ")") {
-        const std::string errMsg =
-            "Missing closing paren in subroutine parameter list";
-        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
-    }
-
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
-    jtok.Advance();
+    PrintLiteralSymbol(")", "subroutine parameter list");
 
     // subroutineBody
     CompileSubroutineBody();

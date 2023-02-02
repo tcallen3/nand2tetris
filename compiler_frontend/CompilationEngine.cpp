@@ -285,7 +285,6 @@ void CompilationEngine::CompileVarDecCommon(const std::string& terminal,
 
 /* -------------------------------------------------------------------------- */
 
-// TODO: print out subroutine name using special format
 void CompilationEngine::CompileSubroutine() {
     const std::string xmlName = "subroutineDec";
 
@@ -319,7 +318,7 @@ void CompilationEngine::CompileSubroutine() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    PrintIdentifier(SUBROUTINE, DEFINED);
     jtok.Advance();
 
     // literal '('

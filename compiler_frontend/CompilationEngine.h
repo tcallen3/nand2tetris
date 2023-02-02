@@ -64,6 +64,12 @@ class CompilationEngine {
         {SymbolTable::FIELD, FIELD},
         {SymbolTable::STATIC, STATIC}};
 
+    const std::map<SymbolTable::VARKIND, VMWriter::Segment> kindToSegment = {
+        {SymbolTable::VAR, VMWriter::LOCAL},
+        {SymbolTable::ARG, VMWriter::ARG},
+        {SymbolTable::FIELD, VMWriter::THIS},
+        {SymbolTable::STATIC, VMWriter::STATIC}};
+
     const std::set<std::string> validTypes = {"int", "char", "boolean"};
     const std::set<std::string> unaryOpTypes = {"-", "~"};
     const std::set<std::string> expressionOpTypes = {"+", "-", "*", "/", "&",
@@ -97,7 +103,8 @@ class CompilationEngine {
                              const Category category);
     void CompileSubroutine();
     void CompileParameterList();
-    void CompileSubroutineBody(const std::string& funcName);
+    void CompileSubroutineBody(const std::string& funcName,
+                               const std::string& funcType);
 
     void CompileVarDec();
 

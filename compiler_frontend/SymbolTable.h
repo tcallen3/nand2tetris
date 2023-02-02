@@ -37,9 +37,11 @@ class SymbolTable {
     std::string TypeOf(const std::string& name) const;
     int IndexOf(const std::string& name) const;
     bool Check(const std::string& name) const;
+    void SetMethod() { isMethod = true; }
 
     // data
   private:
+    bool isMethod;
     int staticVarCount;
     int fieldVarCount;
     int argVarCount;

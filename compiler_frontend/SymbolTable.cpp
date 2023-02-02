@@ -6,6 +6,7 @@
 /* -------------------------------------------------------------------------- */
 
 SymbolTable::SymbolTable() :
+        isMethod(false),
         staticVarCount(0),
         fieldVarCount(0),
         argVarCount(0),
@@ -17,6 +18,7 @@ SymbolTable::SymbolTable() :
 
 void SymbolTable::StartSubroutine() {
     subroutineTable.clear();
+    isMethod = false;
     argVarCount = 0;
     plainVarCount = 0;
 }
@@ -105,7 +107,9 @@ std::string SymbolTable::TypeOf(const std::string& name) const {
 int SymbolTable::IndexOf(const std::string& name) const {
     VarData data = GetVarData(name);
 
-    return data.index;
+    auto result =
+        (isMethod && data.kind == ARG) ? (data.index + 1) : data.index;
+    return result;
 }
 
 /* -------------------------------------------------------------------------- */

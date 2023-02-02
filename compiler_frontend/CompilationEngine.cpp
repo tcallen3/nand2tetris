@@ -306,6 +306,7 @@ void CompilationEngine::CompileSubroutine() {
     symTable.StartSubroutine();
 
     // advance over function type (already checked in caller)
+    const auto funcType = jtok.GetToken();
     jtok.Advance();
 
     // ('void' | type)
@@ -343,7 +344,7 @@ void CompilationEngine::CompileSubroutine() {
     CheckLiteralSymbol(")", "subroutine parameter list");
 
     // subroutineBody
-    CompileSubroutineBody(funcName);
+    CompileSubroutineBody(funcName, funcType);
 
     if (isVoid) {
         vmWriter.WritePush(VMWriter::CONST, 0);
@@ -362,7 +363,8 @@ void CompilationEngine::CompileParameterList() {
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::CompileSubroutineBody(const std::string& funcName) {
+void CompilationEngine::CompileSubroutineBody(const std::string& funcName,
+                                              const std::string& funcType) {
     // syntax: '{' varDec* statements '}'
 
     // literal '{'
@@ -377,7 +379,30 @@ void CompilationEngine::CompileSubroutineBody(const std::string& funcName) {
 
     auto nLocal = symTable.VarCount(SymbolTable::VAR);
     auto vmName = currClass + "." + funcName;
+
+    if (funcType == "method") {
+        // increment parameter count to include hidden "this" pointer
+        symTable.SetMethod();
+        ++nLocal;
+    }
+
     vmWriter.WriteFunction(vmName, nLocal);
+
+    if (funcType == "method") {
+        // need to align "this" segment with hidden arg
+        vmWriter.WritePush(VMWriter::ARG, 0);
+        vmWriter.WritePop(VMWriter::POINTER, 0);
+
+    } else if (funcType == "constructor") {
+        // need to allocate space for the object and store in "this" pointer
+        const auto size = symTable.VarCount(SymbolTable::FIELD);
+        const std::string allocFunction = "Memory.alloc";
+
+        vmWriter.WritePush(VMWriter::CONST, size);
+        vmWriter.WriteCall(allocFunction, 1);
+
+        vmWriter.WritePop(VMWriter::POINTER, 0);
+    }
 
     // statements
     while (jtok.GetToken() != "}") {
@@ -508,16 +533,7 @@ void CompilationEngine::CompileLet() {
 
     auto kind = symTable.KindOf(varName);
     auto index = symTable.IndexOf(varName);
-    VMWriter::Segment seg = VMWriter::LOCAL;
-    if (kind == SymbolTable::STATIC) {
-        // TODO
-
-    } else if (kind == SymbolTable::FIELD) {
-        // TODO
-
-    } else if (kind == SymbolTable::ARG) {
-        seg = VMWriter::ARG;
-    }
+    VMWriter::Segment seg = kindToSegment.at(kind);
 
     vmWriter.WritePop(seg, index);
 
@@ -674,7 +690,19 @@ void CompilationEngine::CompileSubroutineCall() {
         // class or variable (class won't be in lookup table)
         const std::string varName = jtok.GetToken();
         if (symTable.Check(varName)) {
-            className = symTable.TypeOf(jtok.GetToken());
+            // method, need to push "this" segment stored in variable
+            className = symTable.TypeOf(varName);
+
+            auto kind = symTable.KindOf(varName);
+            auto index = symTable.IndexOf(varName);
+            VMWriter::Segment seg = kindToSegment.at(kind);
+
+            // push stored "this" value
+            vmWriter.WritePush(seg, index);
+
+            // pop into "this" register
+            vmWriter.WritePop(VMWriter::POINTER, 0);
+
         } else {
             className = jtok.GetToken();
         }
@@ -815,7 +843,8 @@ void CompilationEngine::CompileTerm() {
             vmWriter.WriteArithmetic(VMWriter::NEG);
 
         } else {
-            // TODO: handle "this" constant
+            // "this" address pointed to by pointer 0
+            vmWriter.WritePush(VMWriter::POINTER, 0);
         }
 
         jtok.Advance();
@@ -866,16 +895,7 @@ void CompilationEngine::CompileTerm() {
 
             auto kind = symTable.KindOf(varName);
             auto index = symTable.IndexOf(varName);
-            VMWriter::Segment seg = VMWriter::LOCAL;
-            if (kind == SymbolTable::STATIC) {
-                // TODO
-
-            } else if (kind == SymbolTable::FIELD) {
-                // TODO
-
-            } else if (kind == SymbolTable::ARG) {
-                seg = VMWriter::ARG;
-            }
+            VMWriter::Segment seg = kindToSegment.at(kind);
 
             vmWriter.WritePush(seg, index);
 

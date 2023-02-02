@@ -162,7 +162,7 @@ void JackTokenizer::ParseIntLiteral() {
 
         if (currColumnNum >= currLine.size()) {
             const std::string errMsg = "Missing semicolon after int literal";
-            tokErrHandler.Report(fname, currLineNum, currColumnNum, errMsg);
+            tokErrHandler.Report(fname, currLineNum, currColumnNum + 1, errMsg);
         }
     }
 

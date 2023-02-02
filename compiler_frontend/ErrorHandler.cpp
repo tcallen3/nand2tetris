@@ -5,7 +5,7 @@
 
 /* -------------------------------------------------------------------------- */
 
-void ErrorHandler::Report(const std::string& file, const int line,
+void ErrorHandler::Report(const std::string& file, const unsigned line,
                           const std::string& message) {
     std::cerr << "[file "
               << "\"" << file << "\", line " << line << "] Error: " << message
@@ -15,7 +15,7 @@ void ErrorHandler::Report(const std::string& file, const int line,
 
 /* -------------------------------------------------------------------------- */
 
-void ErrorHandler::Report(const std::string& file, const int line,
+void ErrorHandler::Report(const std::string& file, const unsigned line,
                           const size_t col, const std::string& message) {
     std::cerr << "[file "
               << "\"" << file << "\", line " << line << ", column " << col

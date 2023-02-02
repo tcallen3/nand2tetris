@@ -5,9 +5,9 @@
 
 class ErrorHandler {
   public:
-    void Report(const std::string& file, const int line,
+    void Report(const std::string& file, const unsigned line,
                 const std::string& message);
-    void Report(const std::string& file, const int line, const size_t col,
+    void Report(const std::string& file, const unsigned line, const size_t col,
                 const std::string& message);
 };
 

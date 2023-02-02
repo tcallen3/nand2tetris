@@ -6,7 +6,7 @@
 namespace fs = std::filesystem;
 
 const std::string inExt = ".jack";
-const std::string outExt = ".vm";
+const std::string outExt = ".xml";
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
                 auto path = p.path();
                 if (path.extension() == inExt) {
                     fs::path currFilePath = path.parent_path() / path.stem();
-                    std::string outName = currFilePath.string() + outExt;
+                    outName = currFilePath.string() + "T" + outExt;
 
                     CompilationEngine compiler(path.string(), outName);
 

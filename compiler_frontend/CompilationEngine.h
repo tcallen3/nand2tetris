@@ -28,6 +28,8 @@ class CompilationEngine {
     std::string currInputFile;
     std::string currClass;
     std::ofstream outFile;
+    unsigned loopCount;
+    unsigned branchCount;
     JackTokenizer jtok;
     ErrorHandler compilerErrorHandler;
     SymbolTable symTable;
@@ -40,7 +42,11 @@ class CompilationEngine {
 
     std::string currIndent;
 
-    std::map<JackTokenizer::Token, std::string> tokenString = {
+    const std::string loopBase = "WHILE_LOOP";
+    const std::string branchBase = "IF_STATEMENT";
+    const std::string endPrefix = "END_";
+
+    const std::map<JackTokenizer::Token, std::string> tokenString = {
         {JackTokenizer::KEYWORD, "keyword"},
         {JackTokenizer::SYMBOL, "symbol"},
         {JackTokenizer::IDENTIFIER, "identifier"},

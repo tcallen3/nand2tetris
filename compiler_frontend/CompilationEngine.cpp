@@ -10,6 +10,8 @@ CompilationEngine::CompilationEngine(const std::string& infileName,
         currInputFile(infileName),
         currClass(),
         outFile(outfileName),
+        loopCount(0),
+        branchCount(0),
         jtok(infileName),
         compilerErrorHandler(),
         symTable(),
@@ -389,25 +391,25 @@ void CompilationEngine::CompileSubroutineBody(const std::string& funcName) {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileVarDec() {
-    const std::string xmlName = "varDec";
+    //const std::string xmlName = "varDec";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    //PrintNodeTag(xmlName, OPENING);
+    //currIndent.push_back('\t');
 
     // syntax: 'var' type varName (',' varName)* ';'
 
     // 'var', already checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // type, etc.
     CompileVarDecCommon(";", VAR);
 
     // literal ';'
-    PrintLiteralSymbol(";", "variable declaration");
+    CheckLiteralSymbol(";", "variable declaration");
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    //currIndent.pop_back();
+    //PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -461,15 +463,9 @@ void CompilationEngine::CompileDo() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileLet() {
-    const std::string xmlName = "letStatement";
-
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
-
     // syntax: 'let' varName ('[' expression ']')? '=' expression ';'
 
     // 'let' -> checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // varName -> identifier
@@ -486,10 +482,7 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    auto kind = symTable.KindOf(varName);
-    const Category category = kindMap.at(kind);
-
-    PrintIdentifier(category, USED);
+    //PrintIdentifier(category, USED);
 
     jtok.Advance();
 
@@ -506,58 +499,88 @@ void CompilationEngine::CompileLet() {
     }
 
     // literal '='
-    PrintLiteralSymbol("=", "let statement");
+    CheckLiteralSymbol("=", "let statement");
 
     // expression
     CompileExpression();
 
-    // literal ';'
-    PrintLiteralSymbol(";", "let statement");
+    // pop result to selected variable
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    auto kind = symTable.KindOf(varName);
+    auto index = symTable.IndexOf(varName);
+    VMWriter::Segment seg = VMWriter::LOCAL;
+    if (kind == SymbolTable::STATIC) {
+        // TODO
+
+    } else if (kind == SymbolTable::FIELD) {
+        // TODO
+
+    } else if (kind == SymbolTable::ARG) {
+        seg = VMWriter::ARG;
+    }
+
+    vmWriter.WritePop(seg, index);
+
+    // literal ';'
+    CheckLiteralSymbol(";", "let statement");
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileWhile() {
-    const std::string xmlName = "whileStatement";
-
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
-
     // syntax: 'while' '(' expression ')' '{' statements '}'
 
+    const auto myLoopCount = loopCount;
+    ++loopCount;
+
     // 'while' -> checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // literal '('
-    PrintLiteralSymbol("(", "while statement condition");
+    CheckLiteralSymbol("(", "while statement condition");
+
+    // label loop beginning
+    const std::string loopID = loopBase + std::to_string(myLoopCount);
+    vmWriter.WriteLabel(loopID);
 
     // expression
     CompileExpression();
 
+    // check negated expression
+    vmWriter.WriteArithmetic(VMWriter::NOT);
+
+    // jump to end if condition fails
+    const std::string endLabel = endPrefix + loopID;
+    vmWriter.WriteIf(endLabel);
+
     // literal ')'
-    PrintLiteralSymbol(")", "while statement condition");
+    CheckLiteralSymbol(")", "while statement condition");
 
     // literal '{'
-    PrintLiteralSymbol("{", "while statement body");
+    CheckLiteralSymbol("{", "while statement body");
 
     // statements
     while (jtok.GetToken() != "}") {
         CompileStatements();
     }
 
-    // literal '}'
-    PrintLiteralSymbol("}", "while statement body");
+    // jump to top of loop
+    vmWriter.WriteGoto(loopID);
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // label loop end
+    vmWriter.WriteLabel(endLabel);
+
+    // literal '}'
+    CheckLiteralSymbol("}", "while statement body");
+
+    //currIndent.pop_back();
+    //PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
+// NOTE: actual VM return command is appended at the end of the calling
+//       function, so this compilation only checks for an expression
 void CompilationEngine::CompileReturn() {
     // syntax: 'return' expression? ';'
 
@@ -576,54 +599,74 @@ void CompilationEngine::CompileReturn() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileIf() {
-    const std::string xmlName = "ifStatement";
+    //const std::string xmlName = "ifStatement";
 
-    PrintNodeTag(xmlName, OPENING);
-    currIndent.push_back('\t');
+    //PrintNodeTag(xmlName, OPENING);
+    //currIndent.push_back('\t');
 
     // syntax: 'if' '(' expression ')' '{' statements '}' ('else' '{' statements
     // '}')?
 
+    const auto myBranchCount = branchCount;
+    ++branchCount;
+
     // 'if' -> checked by caller
-    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
 
     // literal '('
-    PrintLiteralSymbol("(", "if condition");
+    CheckLiteralSymbol("(", "if condition");
 
     // expression
     CompileExpression();
 
+    // check negated expression
+    vmWriter.WriteArithmetic(VMWriter::NOT);
+
+    // jump to end of if branch if condition fails
+    const std::string midLabel = "MID_" + branchBase + std::to_string(myBranchCount);
+    vmWriter.WriteIf(midLabel);
+
     // literal ')'
-    PrintLiteralSymbol(")", "if condition");
+    CheckLiteralSymbol(")", "if condition");
 
     // literal '{'
-    PrintLiteralSymbol("{", "if condition body");
+    CheckLiteralSymbol("{", "if condition body");
 
     // expression
     CompileStatements();
 
     // literal '}'
-    PrintLiteralSymbol("}", "if condition body");
+    CheckLiteralSymbol("}", "if condition body");
+
+    // jump to end of all blocks (including else)
+    const std::string endLabel = endPrefix + branchBase + std::to_string(myBranchCount);
+    vmWriter.WriteGoto(endLabel);
+
+    // write label for end of if branch
+    vmWriter.WriteLabel(midLabel);
 
     // optional else clause
     if (jtok.GetToken() == "else") {
         // 'else'
-        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
 
         // literal '{'
-        PrintLiteralSymbol("{", "if condition body");
+        CheckLiteralSymbol("{", "if condition body");
 
         // expression
         CompileStatements();
 
         // literal '}'
-        PrintLiteralSymbol("}", "if condition body");
+        CheckLiteralSymbol("}", "if condition body");
     }
 
-    currIndent.pop_back();
-    PrintNodeTag(xmlName, CLOSING);
+    // label end of all blocks
+    vmWriter.WriteLabel(endLabel);
+
+    //currIndent.pop_back();
+    //PrintNodeTag(xmlName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -773,7 +816,21 @@ void CompilationEngine::CompileTerm() {
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
 
-        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        if (jtok.GetToken() == "null" || jtok.GetToken() == "false") {
+            // null and false map to constant 0
+            vmWriter.WritePush(VMWriter::CONST, 0);
+
+        } else if (jtok.GetToken() == "true") {
+            // true maps to -1 (i.e. all '1's in 2's complement binary)
+            vmWriter.WritePush(VMWriter::CONST, 1);
+            vmWriter.WriteArithmetic(VMWriter::NEG);
+
+        } else {
+            // TODO: handle "this" constant
+
+        }
+
+        //PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
         jtok.Advance();
 
     } else if (tokenType == JackTokenizer::IDENTIFIER) {
@@ -821,9 +878,22 @@ void CompilationEngine::CompileTerm() {
             }
 
             auto kind = symTable.KindOf(varName);
-            const Category category = kindMap.at(kind);
+            auto index = symTable.IndexOf(varName);
+            VMWriter::Segment seg = VMWriter::LOCAL;
+            if (kind == SymbolTable::STATIC) {
+                // TODO
 
-            PrintIdentifier(category, USED);
+            } else if (kind == SymbolTable::FIELD) {
+                // TODO
+
+            } else if (kind == SymbolTable::ARG) {
+                seg = VMWriter::ARG;
+            }
+
+            vmWriter.WritePush(seg, index);
+            //const Category category = kindMap.at(kind);
+
+            //PrintIdentifier(category, USED);
 
             jtok.Advance();
         }
@@ -843,6 +913,7 @@ void CompilationEngine::CompileTerm() {
     } else if (unaryOpTypes.find(jtok.GetToken()) != unaryOpTypes.end()) {
         // unaryOp
         const auto currOp = jtok.GetToken();
+        jtok.Advance();
 
         // term
         CompileTerm();

@@ -62,16 +62,10 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
         PushRegister("D");
 
     } else if (segment == tempSegment) {
-        if (index > tempMaxOffset) {
-            std::cerr << "WARNING: attempt to push invalid temp offset\n";
-            return;
-        }
+        PushFixed(segment, index, tempBase, tempMaxOffset);
 
-        const int address = tempBase + index;
-
-        outFile << '@' << address << '\n';
-        outFile << "D=M\n";
-        PushRegister("D");
+    } else if (segment == pointerSegment) {
+        PushFixed(segment, index, pointerBase, pointerMaxOffset);
 
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
@@ -80,41 +74,69 @@ void CodeWriter::WritePush(const std::string& segment, const int index) {
 
 /* -------------------------------------------------------------------------- */
 
+void CodeWriter::PushFixed(const std::string& segment, const int index,
+                           const int base, const int maxOffset) {
+    if (index > maxOffset) {
+        std::cerr << "WARNING: attempt to push invalid " << segment
+                  << " offset\n";
+        return;
+    }
+
+    const int address = base + index;
+
+    outFile << '@' << address << '\n';
+    outFile << "D=M\n";
+    PushRegister("D");
+}
+
+/* -------------------------------------------------------------------------- */
+
 void CodeWriter::WritePop(const std::string& segment, const int index) {
     if (regMap.find(segment) != regMap.end()) {
-        PopRegister("D");                               // put val in D reg
+        PopRegister("D");  // put val in D reg
 
-        outFile << "@R13\n";                            // load scratch mem
-        outFile << "M=D\n";                             // R13 = val
-        outFile << '@' << index << '\n';                // load index
-        outFile << "D=A\n";                             // D = index
-        outFile << '@' << regMap.at(segment) << '\n';   // load segment
-        outFile << "A=M+D\n";                           // load Seg[index]
-        outFile << "D=A\n";                             // D = addr Seg[index]
-        outFile << "@R14\n";                            // load scratch mem
-        outFile << "M=D\n";                             // R14 = address
-        outFile << "@R13\n";                            // load scratch mem
-        outFile << "D=M\n";                             // D = val
-        outFile << "@R14\n";                            // load scratch mem
-        outFile << "A=M\n";                             // load address
-        outFile << "M=D\n";                             // M[address] = val
+        outFile << "@R13\n";                           // load scratch mem
+        outFile << "M=D\n";                            // R13 = val
+        outFile << '@' << index << '\n';               // load index
+        outFile << "D=A\n";                            // D = index
+        outFile << '@' << regMap.at(segment) << '\n';  // load segment
+        outFile << "A=M+D\n";                          // load Seg[index]
+        outFile << "D=A\n";                            // D = addr Seg[index]
+        outFile << "@R14\n";                           // load scratch mem
+        outFile << "M=D\n";                            // R14 = address
+        outFile << "@R13\n";                           // load scratch mem
+        outFile << "D=M\n";                            // D = val
+        outFile << "@R14\n";                           // load scratch mem
+        outFile << "A=M\n";                            // load address
+        outFile << "M=D\n";                            // M[address] = val
 
     } else if (segment == tempSegment) {
-        if (index > tempMaxOffset) {
-            std::cerr << "WARNING: attempt to pop invalid offset\n";
-            return;
-        }
+        PopFixed(segment, index, tempBase, tempMaxOffset);
 
-        const int address = tempBase + index;
-
-        PopRegister("D");
-
-        outFile << '@' << address << '\n';
-        outFile << "M=D\n";
+    } else if (segment == pointerSegment) {
+        PopFixed(segment, index, pointerBase, pointerMaxOffset);
 
     } else {
         std::cerr << "WARNING: unrecognized segment \"" << segment << "\"\n";
     }
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CodeWriter::PopFixed(const std::string& segment, const int index,
+                          const int base, const int maxOffset) {
+    if (index > maxOffset) {
+        std::cerr << "WARNING: attempt to pop invalid " << segment
+                  << " offset\n";
+        return;
+    }
+
+    const int address = base + index;
+
+    PopRegister("D");
+
+    outFile << '@' << address << '\n';
+    outFile << "M=D\n";
 }
 
 /* -------------------------------------------------------------------------- */

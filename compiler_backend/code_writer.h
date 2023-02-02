@@ -29,10 +29,15 @@ class CodeWriter {
 
     const std::string pushCommand = "push";
     const std::string popCommand = "pop";
+
     const std::string constSegment = "constant";
     const std::string tempSegment = "temp";
+    const std::string pointerSegment = "pointer";
+
     const int tempBase = 5;
     const int tempMaxOffset = 7;
+    const int pointerBase = 3;
+    const int pointerMaxOffset = 1;
 
     const std::set<std::string> binaryCommands = {"add", "sub", "eq", "gt",
                                                   "lt",  "and", "or"};
@@ -46,7 +51,11 @@ class CodeWriter {
 
     // methods
     void WritePush(const std::string& segment, const int index);
+    void PushFixed(const std::string& segment, const int index, const int base,
+                   const int maxOffset);
     void WritePop(const std::string& segment, const int index);
+    void PopFixed(const std::string& segment, const int index, const int base,
+                  const int maxOffset);
     void WriteBinaryOp(const std::string& command);
     void WriteUnaryOp(const std::string& command);
     void WriteOpCommand(const std::string& command);

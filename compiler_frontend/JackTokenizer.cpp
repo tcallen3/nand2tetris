@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdlib>
+#include <iostream>
 #include <sstream>
 
 /* -------------------------------------------------------------------------- */
@@ -9,8 +10,9 @@
 JackTokenizer::JackTokenizer(const std::string& fileName) :
         inFile(fileName),
         fname(fileName),
-        currLine(0),
+        currLineNum(0),
         currColumnNum(0),
+        currLine(),
         moreTokens(true),
         currToken(),
         currTokenType(),
@@ -31,7 +33,7 @@ JackTokenizer::JackTokenizer(const std::string& fileName) :
 void JackTokenizer::Advance() {
     do {
         AdvanceDriver();
-    } while (currTokenType == COMMENT || currTokenType == SPACE)
+    } while (currTokenType == COMMENT || currTokenType == SPACE);
 }
 
 /* -------------------------------------------------------------------------- */

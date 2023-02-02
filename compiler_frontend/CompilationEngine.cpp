@@ -30,8 +30,8 @@ void CompilationEngine::Compile() {
         {JackTokenizer::INT_CONST, "integerConstant"},
         {JackTokenizer::STRING_CONST, "stringConstant"}};
 
-    const std::map<char, std::string> specialChars = {
-        {'<', "&lt;"}, {'>', "&gt;"}, {'&', "&amp;"}};
+    const std::map<std::string, std::string> specialChars = {
+        {"<", "&lt;"}, {">", "&gt;"}, {"&", "&amp;"}};
 
     while (jtok.HasMoreTokens()) {
         auto tokenType = jtok.TokenType();
@@ -59,7 +59,7 @@ void CompilationEngine::Compile() {
 
 /* -------------------------------------------------------------------------- */
 
-void PrintXMLTag(const std::string& tagName, TagType type) {
+void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
     outFile << '<';
 
     if (type == CLOSING) {

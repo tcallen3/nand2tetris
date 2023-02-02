@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <string>
 
 class JackTokenizer {
@@ -27,7 +28,6 @@ class JackTokenizer {
         COMMENT,
         SPACE,
         EMPTY,
-        UNKNOWN
     };
 
     enum Keyword {
@@ -52,7 +52,6 @@ class JackTokenizer {
         FALSE,
         NULL_KEY,
         THIS,
-        UNKNOWN
     };
 
     // public interface

@@ -29,11 +29,12 @@ int main(int argc, char* argv[]) {
         } else if (fs::is_directory(inputPath)) {
 
             for (auto& p : fs::directory_iterator(inputPath)) {
-                if (p.extension() == inExt) {
-                    fs::path currFilePath = p.parent_path() / p.stem();
+                auto path = p.path();
+                if (path.extension() == inExt) {
+                    fs::path currFilePath = path.parent_path() / path.stem();
                     std::string outName = currFilePath.string() + outExt;
 
-                    CompilationEngine compiler(p.string(), outName);
+                    CompilationEngine compiler(path.string(), outName);
 
                     compiler.Compile();
                 }

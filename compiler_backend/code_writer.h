@@ -23,8 +23,8 @@ class CodeWriter {
     void WriteArithmetic(const std::string& command);
     void WritePushPop(const Command ptype, const std::string& segment,
                       const int index);
-    void WriteLabel(const std::string& label);
-    void WriteGoto(const std::string& label);
+    void WriteLabel(const std::string& label, const bool isFunction = false);
+    void WriteGoto(const std::string& label, const bool isFunction = false);
     void WriteIf(const std::string& label);
     void WriteCall(const std::string& functionName, int nArgs);
     void WriteFunction(const std::string& functionName, int nLocals);

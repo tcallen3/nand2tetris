@@ -168,15 +168,28 @@ void CodeWriter::PopFixed(const std::string& segment, const int index,
 
 /* -------------------------------------------------------------------------- */
 
-void CodeWriter::WriteLabel(const std::string& label) {
-    outFile << '(' << currFunction.top() << '$' << label << ")\n";
+void CodeWriter::WriteLabel(const std::string& label, const bool isFunction) {
+    if (isFunction) {
+        outFile << '(' << label << ")\n";
+
+    } else {
+        outFile << '(' << currFunction.top() << '$' << label << ")\n";
+
+    }
 }
 
 /* -------------------------------------------------------------------------- */
 
 // unconditional jump
-void CodeWriter::WriteGoto(const std::string& label) {
-    outFile << '@' << currFunction.top() << '$' << label << '\n';
+void CodeWriter::WriteGoto(const std::string& label, const bool isFunction) {
+    if (isFunction) {
+        outFile << '@' << label << '\n';
+
+    } else {
+        outFile << '@' << currFunction.top() << '$' << label << '\n';
+
+    }
+
     outFile << "0;JMP\n";
 }
 
@@ -193,13 +206,12 @@ void CodeWriter::WriteIf(const std::string& label) {
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteCall(const std::string& functionName, int nArgs) {
-    const std::string retBase = "Ret." + functionName + std::to_string(returnIndex);
-    const std::string fullLabel = currFunction.top() + "$" + retBase;
+    const std::string retLabel = "Ret." + functionName + std::to_string(returnIndex);
 
     ++returnIndex;
 
     // push return-address
-    outFile << '@' << fullLabel << '\n';
+    outFile << '@' << retLabel << '\n';
     PushRegister("A");
 
     // push LCL
@@ -238,16 +250,16 @@ void CodeWriter::WriteCall(const std::string& functionName, int nArgs) {
     outFile << "M=D\n";
 
     // goto f
-    WriteGoto(functionName);
+    WriteGoto(functionName, true);
 
     // label return-address
-    WriteLabel(retBase);
+    WriteLabel(retLabel, true);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CodeWriter::WriteFunction(const std::string& functionName, int nLocals) {
-    WriteLabel(functionName);
+    WriteLabel(functionName, true);
 
     for (int i = 0; i < nLocals; ++i) {
         WritePush(constSegment, 0);

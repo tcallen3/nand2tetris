@@ -1,5 +1,6 @@
 #include "CompilationEngine.h"
 
+#include <cctype>
 #include <cstdlib>
 #include <iostream>
 
@@ -494,20 +495,29 @@ void CompilationEngine::CompileLet() {
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
 
-    // PrintIdentifier(category, USED);
-
     jtok.Advance();
+
+    bool isArray = false;
 
     // optional brackets
     if (jtok.GetToken() == "[") {
+        isArray = true;
+
         // literal '['
-        PrintLiteralSymbol("[", "array dereference");
+        CheckLiteralSymbol("[", "array dereference");
 
         // expression
         CompileExpression();
 
+        // find memory location to store result
+        // vmWriter.WritePush(seg, index);
+        // vmWriter.WriteArithmetic(VMWriter::ADD);
+
+        // pointer 1 is "that" segment
+        // vmWriter.WritePop(VMWriter::TEMP, 1);
+
         // literal ']'
-        PrintLiteralSymbol("]", "array dereference");
+        CheckLiteralSymbol("]", "array dereference");
     }
 
     // literal '='
@@ -522,7 +532,24 @@ void CompilationEngine::CompileLet() {
     auto index = symTable.IndexOf(varName);
     VMWriter::Segment seg = kindToSegment.at(kind);
 
-    vmWriter.WritePop(seg, index);
+    if (isArray) {
+        // hold return value
+        vmWriter.WritePop(VMWriter::TEMP, 1);
+
+        // current stack element is bracket expression, so add var val
+        vmWriter.WritePush(seg, index);
+        vmWriter.WriteArithmetic(VMWriter::ADD);
+
+        // move to "that" pointer
+        vmWriter.WritePop(VMWriter::POINTER, 1);
+
+        // get value from temp
+        vmWriter.WritePush(VMWriter::TEMP, 1);
+        vmWriter.WritePop(VMWriter::THAT, 0);
+
+    } else {
+        vmWriter.WritePop(seg, index);
+    }
 
     // literal ';'
     CheckLiteralSymbol(";", "let statement");
@@ -816,7 +843,35 @@ void CompilationEngine::CompileTerm() {
 
     } else if (tokenType == JackTokenizer::STRING_CONST) {
         // stringConstant
-        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        // NOTE: JackOS only supports upper-case letters
+        const std::string targetString = jtok.GetToken();
+        const std::string allocator = "String.new";
+        const std::string accumulator = "String.appendChar";
+
+        // first allocate space for full string
+        vmWriter.WritePush(VMWriter::CONST, targetString.size());
+        vmWriter.WriteCall(allocator, 1);
+
+        // store in "that" pointer
+        vmWriter.WritePop(VMWriter::POINTER, 1);
+
+        // copy string
+        for (unsigned i = 0; i < targetString.size(); ++i) {
+            // set base for String object
+            vmWriter.WritePush(VMWriter::POINTER, 1);
+
+            // push ACII representation of next character
+            int asciiVal = static_cast<int>(std::toupper(targetString[i]));
+            vmWriter.WritePush(VMWriter::CONST, asciiVal);
+
+            // call append method
+            vmWriter.WriteCall(accumulator, 2);
+            vmWriter.WritePop(VMWriter::POINTER, 1);
+        }
+
+        // copy start of string as output
+        vmWriter.WritePush(VMWriter::POINTER, 1);
+
         jtok.Advance();
 
     } else if (tokenType == JackTokenizer::KEYWORD) {
@@ -856,20 +911,32 @@ void CompilationEngine::CompileTerm() {
             }
 
             auto kind = symTable.KindOf(varName);
-            const Category category = kindMap.at(kind);
+            auto seg = kindToSegment.at(kind);
+            auto index = symTable.IndexOf(varName);
 
-            PrintIdentifier(category, USED);
+            // const Category category = kindMap.at(kind);
+
+            // PrintIdentifier(category, USED);
 
             jtok.Advance();
 
             // literal '['
-            PrintLiteralSymbol("[", "expression term");
+            CheckLiteralSymbol("[", "expression term");
 
             // expression
             CompileExpression();
 
+            vmWriter.WritePush(seg, index);
+            vmWriter.WriteArithmetic(VMWriter::ADD);
+
+            // get address of result into "that" pointer
+            vmWriter.WritePop(VMWriter::POINTER, 1);
+
+            // push dereferenced value onto the stack
+            vmWriter.WritePush(VMWriter::THAT, 0);
+
             // literal ']'
-            PrintLiteralSymbol("]", "expression term");
+            CheckLiteralSymbol("]", "expression term");
 
         } else if (jtok.LookaheadToken() == "(" ||
                    jtok.LookaheadToken() == ".") {

@@ -15,6 +15,14 @@ SymbolTable::SymbolTable() :
 
 /* -------------------------------------------------------------------------- */
 
+void SymbolTable::StartSubroutine() {
+    subroutineTable.clear();
+    argVarCount = 0;
+    plainVarCount = 0;
+}
+
+/* -------------------------------------------------------------------------- */
+
 void SymbolTable::Define(const std::string& name, const std::string& type,
                          const VARKIND kind) {
     if (kind == STATIC || kind == FIELD) {

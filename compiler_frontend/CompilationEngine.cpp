@@ -294,6 +294,9 @@ void CompilationEngine::CompileSubroutine() {
     // syntax: ('constructor' | 'function' | 'method') ('void' | type)
     //         subroutineName '(' parameterList ')' subroutineBody
 
+    // clear symbol table
+    symTable.StartSubroutine();
+
     // print function type (already checked in caller)
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();
@@ -494,6 +497,13 @@ void CompilationEngine::CompileLet() {
             "Invalid identifier for variable name in let statement";
         compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
     }
+
+    /*
+        const std::string varName = jtok.GetToken();
+        if (!symTable.Check(varName)) {
+
+        }
+    */
 
     PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
     jtok.Advance();

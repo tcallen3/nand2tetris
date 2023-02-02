@@ -28,7 +28,7 @@ class SymbolTable {
                 index(i) {}
     };
 
-    void StartSubroutine() { subroutineTable.clear(); }
+    void StartSubroutine();
 
     void Define(const std::string& name, const std::string& type,
                 const VARKIND kind);

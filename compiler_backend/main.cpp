@@ -35,9 +35,8 @@ int main(int argc, char* argv[]) {
         } else if (fs::is_directory(inputPath)) {
             // assumes translator is called on relative path of dir
             // i.e. using -> ./VMTranslator mydir
-            fs::path outPath =
-                inputPath.parent_path() / inputPath.parent_path();
-            outName = outPath;
+            fs::path tempPath = inputPath.parent_path();
+            outName = tempPath;
             outName += outExt;
 
             CodeWriter writer(outName);
@@ -46,9 +45,14 @@ int main(int argc, char* argv[]) {
 
             for (auto& p : fs::directory_iterator(inputPath)) {
                 Parser parser(p.path());
-                writer.SetFileName(p.path());
+                writer.SetFileName(p.path().stem());
                 TranslateVMFile(parser, writer);
             }
+
+            // move temporary file to final destination
+            fs::path oldPath(outName);
+            fs::path finalPath = inputPath.parent_path() / outName;
+            fs::rename(oldPath, finalPath);
 
         } else {
             std::cerr << "ERROR: Unsupported file type for " << inputPath

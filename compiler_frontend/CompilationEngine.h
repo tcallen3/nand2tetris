@@ -45,8 +45,10 @@ class CompilationEngine {
     void PrintNodeTag(const std::string& tagName, TagType type);
 
     void CompileClassVarDec();
+    void CompileVarDecCommon(const std::string& terminal);
     void CompileSubroutine();
     void CompileParameterList();
+    void CompileSubroutineBody();
 
     void CompileVarDec();
 

@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <set>
 
 /* -------------------------------------------------------------------------- */
 
@@ -77,8 +78,6 @@ void CompilationEngine::CompileClass() {
                 "Unrecognized statement in class declaration";
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
-
-        jtok.Advance();
     }
 
     // '}' literal
@@ -101,14 +100,13 @@ void CompilationEngine::PrintToken(const std::string& typeName,
                                    const std::string& token) {
     outFile << currIndent;
     PrintXMLTag(typeName, OPENING);
-    outFile << " " << jtok.GetToken() << " ";
+    outFile << " " << token << " ";
     PrintXMLTag(typeName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
-
     outFile << '<';
 
     if (type == CLOSING) {
@@ -125,10 +123,7 @@ void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::PrintNodeTag(const std::string& tagName, TagType type) {
-
-    if (type == OPENING) {
-        outFile << currIndent;
-    }
+    outFile << currIndent;
 
     outFile << '<';
 
@@ -149,10 +144,68 @@ void CompilationEngine::CompileClassVarDec() {
     PrintNodeTag(xmlName, OPENING);
     currIndent.push_back('\t');
 
-    // TODO: add content
+    // syntax: ('static' | 'field') type varName (',' varName)* ';'
+
+    // static/field dec (already selected in caller)
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    jtok.Advance();
+
+    CompileVarDecCommon(";");
+
+    // terminal semicolon
+    if (jtok.GetToken() != ";") {
+        const std::string errMsg = "Missing semicolon";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
 
     currIndent.pop_back();
     PrintNodeTag(xmlName, CLOSING);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileVarDecCommon(const std::string& terminal) {
+
+    // type must be int, char, boolean, or class ID
+    const std::set<std::string> allowedTypes = {"int", "char", "boolean"};
+
+    if (allowedTypes.find(jtok.GetToken()) == allowedTypes.end() &&
+        jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg =
+            "Invalid type for variable declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // varName
+    if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        const std::string errMsg =
+            "Invalid name for variable declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+    jtok.Advance();
+
+    // optional comma-separated identifiers
+    while (jtok.GetToken() != terminal) {
+        if (!(jtok.TokenType() == JackTokenizer::SYMBOL ||
+              jtok.TokenType() == JackTokenizer::IDENTIFIER)) {
+            const std::string errMsg =
+                "Unexpected token in variable declaration";
+            compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+        }
+
+        PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+        jtok.Advance();
+    }
+
 }
 
 /* -------------------------------------------------------------------------- */
@@ -172,6 +225,10 @@ void CompilationEngine::CompileSubroutine() {
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::CompileParameterList() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileSubroutineBody() {}
 
 /* -------------------------------------------------------------------------- */
 

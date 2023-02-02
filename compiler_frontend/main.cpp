@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
             CompilationEngine compiler(inputPath.filename(), outName);
 
-            compiler.Compile();
+            compiler.CompileClass();
 
         } else if (fs::is_directory(inputPath)) {
             for (auto& p : fs::directory_iterator(inputPath)) {
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 
                     CompilationEngine compiler(path.string(), outName);
 
-                    compiler.Compile();
+                    compiler.CompileClass();
                 }
             }
 

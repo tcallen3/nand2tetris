@@ -19,52 +19,98 @@ CompilationEngine::CompilationEngine(const std::string& infileName,
 
 /* -------------------------------------------------------------------------- */
 
-void CompilationEngine::Compile() {
-    // write tree root
-    outFile << "<tokens>\n";
+void CompilationEngine::CompileClass() {
+    const std::string xmlName = "class";
 
-    const std::map<JackTokenizer::Token, std::string> xmlMap = {
-        {JackTokenizer::KEYWORD, "keyword"},
-        {JackTokenizer::SYMBOL, "symbol"},
-        {JackTokenizer::IDENTIFIER, "identifier"},
-        {JackTokenizer::INT_CONST, "integerConstant"},
-        {JackTokenizer::STRING_CONST, "stringConstant"}};
+    PrintXMLTag(xmlName, OPENING);
+    currIndent.push_back("\t");
 
-    const std::map<std::string, std::string> specialChars = {
-        {"<", "&lt;"}, {">", "&gt;"}, {"&", "&amp;"}};
+    // syntax: 'class' className '{' classVarDec* subroutineDec* '}'
 
-    // read initial token
+    // first call so advance the tokenizer
     jtok.Advance();
 
-    while (jtok.HasMoreTokens()) {
-        auto tokenType = jtok.TokenType();
-        if (xmlMap.find(tokenType) == xmlMap.end()) {
-            std::string errMsg = "Unexpected token type reported to compiler";
+    // 'class'
+    if (!(jtok.TokenType() == JackTokenizer::KEYWORD &&
+          jtok.KeywordType == JackTokenizer::CLASS)) {
+        std::string errMsg =
+            "Missing 'class' declaration. All code must be wrapped in classes";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    // className
+    jtok.Advance();
+
+    if (jtok.TokenType() != JackTokenizer::IDENTIFIER) {
+        std::string errMsg = "Class name must be a valid identifier";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    // '{' literal
+    jtok.Advance();
+
+    if (!(jtok.TokenType() == JackTokenizer::SYMBOL &&
+          jtok.GetToken() == "{")) {
+        std::string errMsg = "Missing opening bracket in class declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    // check for classVarDec vs. subroutineDec and repeat
+    jtok.Advance();
+
+    while (jtok.TokenType() != JackTokenizer::SYMBOL) {
+        const std::string token = jtok.GetToken();
+
+        if (token == "static" || token == "field") {
+            CompileClassVarDec();
+        } else if (token == "constructor" || token == "function" || token == "method") {
+            CompileSubroutine();
+        } else {
+            const std::string errMsg = "Unrecognized statement in class declaration";
             compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
         }
-
-        PrintXMLTag(xmlMap.at(tokenType), OPENING);
-
-        std::string currToken = jtok.GetToken();
-
-        if (specialChars.find(currToken) != specialChars.end()) {
-            currToken = specialChars.at(currToken);
-        }
-
-        outFile << " " << currToken << " ";
-
-        PrintXMLTag(xmlMap.at(tokenType), CLOSING);
 
         jtok.Advance();
     }
 
-    // close tree root
-    outFile << "</tokens>\n";
+    // '}' literal
+    // no advancing since previous loop caught us up to here
+    if (!(jtok.TokenType() == JackTokenizer::SYMBOL &&
+          jtok.GetToken() == "}")) {
+        std::string errMsg = "Missing closing bracket in class declaration";
+        compilerErrorHandler.Report(currInputFile, jtok.LineNum(), errMsg);
+    }
+
+    PrintToken(tokenString.at(jtok.TokenType()), jtok.GetToken());
+
+    currIndent.pop_back("\t");
+    PrintXMLTag(xmlName, CLOSING);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::PrintToken(const std::string& typeName,
+                                   const std::string& token) {
+    PrintXMLTag(typeName, OPENING);
+    outFile << jtok.GetToken();
+    PrintXMLTag(typeName, CLOSING);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
+    outFile << currIndent;
+
+    if (type == CLOSING) {
+        outFile << ' ';
+    }
+
     outFile << '<';
 
     if (type == CLOSING) {
@@ -75,5 +121,65 @@ void CompilationEngine::PrintXMLTag(const std::string& tagName, TagType type) {
 
     if (type == CLOSING) {
         outFile << '\n';
+    } else {
+        outFile << ' ';
     }
 }
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileClassVarDec() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileSubroutine() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileParameterList() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileVarDec() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileStatements() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileDo() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileLet() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileWhile() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileReturn() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileIf() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileExpression() {}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileTerm() {
+    // TODO: implement term detection
+}
+
+/* -------------------------------------------------------------------------- */
+
+void CompilationEngine::CompileExpressionList() {
+    // TODO: implement recursive expression list compilation
+}
+
+/* -------------------------------------------------------------------------- */
